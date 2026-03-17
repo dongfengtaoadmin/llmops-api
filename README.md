@@ -1,3 +1,5 @@
+python -m venv .venv
+source .venv/bin/activate
 
 启动步骤
 1. 进入项目目录
