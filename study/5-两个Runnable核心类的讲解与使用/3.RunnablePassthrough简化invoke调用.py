@@ -38,6 +38,10 @@ llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
 parser = StrOutputParser()
 
 # 4.构建链
+# 现在用 RunnablePassthrough.assign 是“更省事的写法”：
+
+# 自动把 query 透传过去
+# 只额外算并添加 context
 chain = RunnablePassthrough.assign(context=lambda x: retrieval(x["query"])) | prompt | llm | parser
 
 # 5.调用链

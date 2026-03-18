@@ -50,16 +50,14 @@ class AppHandler:
         if not query:
             return jsonify({"error": {"query": ["query 不能为空"]}})
 
+
         prompt = ChatPromptTemplate.from_template("{query}")
-
-        # 2. 构建 OpenAI 客户端并发起请求
         llm = ChatOpenAI(model="gpt-4o-mini", base_url=os.getenv("OPENAI_API_BASE"), api_key=os.getenv("OPENAI_API_KEY"))  
-
-        # 3. 发起响应
-        ai_message = llm.invoke(prompt.invoke({"query": query}))
-        # 4. 解析响应
         parser = StrOutputParser()
-        content = parser.invoke(ai_message)
+        # chain = prompt | llm | parser 就是构造了一个 “从输入字典 -> prompt -> llm -> parser -> 最终字符串结果” 的流水线链路。
+        chain = prompt | llm | parser
+
+        content = chain.invoke({"query": query})
         
         return success_json(data={"content": content})
     def ping(self):

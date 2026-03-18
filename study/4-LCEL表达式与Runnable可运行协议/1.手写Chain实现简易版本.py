@@ -6,7 +6,7 @@
 @File    : 1.手写Chain实现简易版本.py
 """
 from typing import Any
-
+import os
 import dotenv
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -16,7 +16,7 @@ dotenv.load_dotenv()
 
 # 1.构建组件
 prompt = ChatPromptTemplate.from_template("{query}")
-llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
+llm = ChatOpenAI(model="gpt-4o-mini", base_url=os.getenv("OPENAI_API_BASE"), api_key=os.getenv("OPENAI_API_KEY"))   
 parser = StrOutputParser()
 
 
@@ -26,14 +26,17 @@ class Chain:
 
     def __init__(self, steps: list):
         self.steps = steps
-
+    # invoke 是执行链，input 是输入，output 是输出，step 是步骤
     def invoke(self, input: Any) -> Any:
         for step in self.steps:
-            input = step.invoke(input)
+            # Chain.invoke() 里：每一步都在用同一个最初的 input（也就是 {"query": ...} 这个 dict）去调用 step.invoke(input)
+            output = step.invoke(input)
+            input = output
             print("步骤:", step)
-            print("输出:", input)
+
+            print("输出:", output)
             print("===============")
-        return input
+        return output
 
 
 # 3.编排链

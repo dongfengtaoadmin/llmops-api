@@ -6,6 +6,7 @@
 @File    : 2.LCEL表达式简化版本.py
 """
 
+import os
 import dotenv
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -15,10 +16,11 @@ dotenv.load_dotenv()
 
 # 1.构建组件
 prompt = ChatPromptTemplate.from_template("{query}")
-llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
+llm = ChatOpenAI(model="gpt-4o-mini")   
 parser = StrOutputParser()
 
 # 2.创建链
+# chain = prompt | llm | parser 就是构造了一个 “从输入字典 -> prompt -> llm -> parser -> 最终字符串结果” 的流水线链路。
 chain = prompt | llm | parser
 
 # 3.调用链得到结果
