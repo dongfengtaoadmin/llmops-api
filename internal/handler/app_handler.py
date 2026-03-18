@@ -12,6 +12,9 @@ from pkg.response import success_json, validate_error_json, success_message
 from internal.exception import FailException
 from internal.service.app_service import AppService
 
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
 
 @inject
 @dataclass
@@ -47,20 +50,17 @@ class AppHandler:
         if not query:
             return jsonify({"error": {"query": ["query 不能为空"]}})
 
-        # 2. 构建 OpenAI 客户端并发起请求
-        env = os.getenv("OPENAI_API_BASE")
-        api_key = os.getenv("OPENAI_API_KEY")
-        client = OpenAI(base_url=env, api_key=api_key)
+        prompt = ChatPromptTemplate.from_template("{query}")
 
-        # 3. 调用模型并返回结果
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "你是OpenAI开发的聊天机器人，请根据用户的输入回复对应的信息"},
-                {"role": "user", "content": query},
-            ]
-        )
-        content = completion.choices[0].message.content
+        # 2. 构建 OpenAI 客户端并发起请求
+        llm = ChatOpenAI(model="gpt-4o-mini", base_url=os.getenv("OPENAI_API_BASE"), api_key=os.getenv("OPENAI_API_KEY"))  
+
+        # 3. 发起响应
+        ai_message = llm.invoke(prompt.invoke({"query": query}))
+        # 4. 解析响应
+        parser = StrOutputParser()
+        content = parser.invoke(ai_message)
+        
         return success_json(data={"content": content})
     def ping(self):
         raise FailException(message="测试失败")

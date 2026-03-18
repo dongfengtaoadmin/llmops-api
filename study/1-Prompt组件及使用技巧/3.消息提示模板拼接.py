@@ -16,7 +16,4 @@ human_chat_prompt = ChatPromptTemplate.from_messages([
 
 chat_prompt = system_chat_prompt + human_chat_prompt
 
-print(chat_prompt.invoke({
-    "username": "慕小课",
-    "query": "你好，你是?"
-}))
+print(chat_prompt)

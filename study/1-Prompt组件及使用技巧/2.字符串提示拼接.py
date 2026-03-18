@@ -13,4 +13,8 @@ prompt = (
         "\n使用{language}语言"
 )
 
+subject = "Alice"
+language = 25
+result = f"请讲一个关于{subject}的冷笑话"  + ",让我开心下" + f"使用{language}语言"
+print(result)
 print(prompt.invoke({"subject": "程序员", "language": "中文"}).to_string())
