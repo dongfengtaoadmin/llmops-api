@@ -1,2 +1,5 @@
 .venv/
 env/
+tmp/
+storage/
+.env
