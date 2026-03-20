@@ -1,6 +1,6 @@
 import os
 import uuid
-
+from uuid import UUID
 from dataclasses import dataclass
 from injector import inject
 from flask import request, jsonify
@@ -39,7 +39,7 @@ class AppHandler:
         return success_message(f"应用已经成功删除，id为:{app.id}")
 
 
-    def completion(self):
+    def debug(self, app_id: UUID):
         """聊天接口"""
         # 1. 使用 CompletionReq 校验请求体
         form = CompletionReq() 
