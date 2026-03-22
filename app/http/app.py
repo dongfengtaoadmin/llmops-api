@@ -8,6 +8,7 @@
 from internal.server import Http
 from internal.router import Router
 from config import Config
+import os
 from injector import Injector
 from pkg.sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -27,4 +28,6 @@ app = Http(
 )
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # macOS 上 5000 常被 AirPlay 接收器占用，请求会落到 AirTunes 并返回 403，而非本应用
+    _port = int(os.getenv("PORT", "9000"))
+    app.run(debug=True, port=_port)
