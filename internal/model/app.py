@@ -45,6 +45,7 @@ class App(db.Model):
         Index("idx_app_account_id", "account_id"),
     )
     # server_default 是 Postgres 特有的语法，用于设置默认值 迁移数据库的时候会自动生成一个默认值，不需要手动设置
+    # server_onupdate 不会把里面的值映射到数据库中，但是迁移的时候会报错 就可以把 internal/migration/versions 目录下的文件删除，然后重新生成
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
     account_id = Column(UUID)
     name = Column(String(255), nullable=False, server_default=text("''::character varying"))

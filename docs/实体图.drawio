@@ -1,0 +1,174 @@
+<mxfile host="65bd71144e">
+    <diagram id="entity-erd" name="实体关系图">
+        <mxGraphModel dx="1840" dy="1336" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="acc-swim" value="account（用户表）" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=14;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#3535F0;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="520" width="240" height="210" as="geometry"/>
+                </mxCell>
+                <mxCell id="acc-r1" value="🔑 id — uuid NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;fontStyle=1" parent="acc-swim" vertex="1">
+                    <mxGeometry y="28" width="240" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="acc-r2" value="name — varchar(255) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="acc-swim" vertex="1">
+                    <mxGeometry y="54" width="240" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="acc-r3" value="📇 email — varchar(255) NOT NULL, IDX" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="acc-swim" vertex="1">
+                    <mxGeometry y="80" width="240" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="acc-r4" value="password — varchar(255) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="acc-swim" vertex="1">
+                    <mxGeometry y="106" width="240" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="acc-r5" value="status — char(100) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="acc-swim" vertex="1">
+                    <mxGeometry y="132" width="240" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="acc-r6" value="updated_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="acc-swim" vertex="1">
+                    <mxGeometry y="158" width="240" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="acc-r7" value="created_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="acc-swim" vertex="1">
+                    <mxGeometry y="184" width="240" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-swim" value="app（应用表）" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#3535F0;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="80" width="280" height="314" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r1" value="🔑 id — uuid NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;fontStyle=1" parent="app-swim" vertex="1">
+                    <mxGeometry y="28" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r2" value="📇 account_id — uuid NOT NULL → account" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="app-swim" vertex="1">
+                    <mxGeometry y="54" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r3" value="published_app_config_id — uuid（已发布配置）" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="app-swim" vertex="1">
+                    <mxGeometry y="80" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r4" value="drafted_app_config_id — uuid（草稿配置）" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="app-swim" vertex="1">
+                    <mxGeometry y="106" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r5" value="debug_conversation_id — uuid（调试会话）" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="app-swim" vertex="1">
+                    <mxGeometry y="132" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r6" value="name — varchar(255) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="app-swim" vertex="1">
+                    <mxGeometry y="158" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r7" value="description — text NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="app-swim" vertex="1">
+                    <mxGeometry y="184" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r8" value="icon — varchar(255) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="app-swim" vertex="1">
+                    <mxGeometry y="210" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r9" value="status — char(100) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="app-swim" vertex="1">
+                    <mxGeometry y="236" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r10" value="updated_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="app-swim" vertex="1">
+                    <mxGeometry y="262" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="app-r11" value="created_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="app-swim" vertex="1">
+                    <mxGeometry y="288" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="cfg-swim" value="app_config（应用配置表）" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#3535F0;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="500" width="280" height="210" as="geometry"/>
+                </mxCell>
+                <mxCell id="cfg-r1" value="🔑 id — uuid NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;fontStyle=1" parent="cfg-swim" vertex="1">
+                    <mxGeometry y="28" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="cfg-r2" value="📇 app_id — uuid NOT NULL, IDX → app" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="cfg-swim" vertex="1">
+                    <mxGeometry y="54" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="cfg-r3" value="model_config — JSONB（模型配置）" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="cfg-swim" vertex="1">
+                    <mxGeometry y="80" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="cfg-r4" value="memory_mode — varchar(100) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="cfg-swim" vertex="1">
+                    <mxGeometry y="106" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="cfg-r5" value="status — char(100) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="cfg-swim" vertex="1">
+                    <mxGeometry y="132" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="cfg-r6" value="updated_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="cfg-swim" vertex="1">
+                    <mxGeometry y="158" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="cfg-r7" value="created_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="cfg-swim" vertex="1">
+                    <mxGeometry y="184" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="conv-swim" value="conversation（会话表）" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=14;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#3535F0;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="80" width="280" height="184" as="geometry"/>
+                </mxCell>
+                <mxCell id="conv-r1" value="🔑 id — uuid NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;fontStyle=1" parent="conv-swim" vertex="1">
+                    <mxGeometry y="28" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="conv-r2" value="📇 account_id — uuid NOT NULL, IDX → account" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="conv-swim" vertex="1">
+                    <mxGeometry y="54" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="conv-r3" value="📇 app_id — uuid NOT NULL, IDX → app" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="conv-swim" vertex="1">
+                    <mxGeometry y="80" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="conv-r4" value="summary — text NOT NULL（总结摘要）" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="conv-swim" vertex="1">
+                    <mxGeometry y="106" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="conv-r5" value="updated_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="conv-swim" vertex="1">
+                    <mxGeometry y="132" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="conv-r6" value="created_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="conv-swim" vertex="1">
+                    <mxGeometry y="158" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-swim" value="message（消息表）" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=14;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#3535F0;" parent="1" vertex="1">
+                    <mxGeometry x="880" y="80" width="300" height="288" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-r1" value="🔑 id — uuid NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;fontStyle=1" parent="msg-swim" vertex="1">
+                    <mxGeometry y="28" width="300" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-r2" value="📇 conversation_id — uuid NOT NULL, IDX" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="msg-swim" vertex="1">
+                    <mxGeometry y="54" width="300" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-r3" value="📇 account_id — uuid NOT NULL, IDX → account" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="msg-swim" vertex="1">
+                    <mxGeometry y="80" width="300" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-r4" value="query — text NOT NULL（用户提问）" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="msg-swim" vertex="1">
+                    <mxGeometry y="106" width="300" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-r5" value="answer — text NOT NULL（AI 回答）" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="msg-swim" vertex="1">
+                    <mxGeometry y="132" width="300" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-r6" value="answer_tokens — int NOT NULL, default 0" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="msg-swim" vertex="1">
+                    <mxGeometry y="158" width="300" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-r7" value="response_latency — float NOT NULL, default 0" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="msg-swim" vertex="1">
+                    <mxGeometry y="184" width="300" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-r8" value="deleted_at — timestamp（软删，可空）" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="msg-swim" vertex="1">
+                    <mxGeometry y="210" width="300" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-r9" value="updated_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="msg-swim" vertex="1">
+                    <mxGeometry y="236" width="300" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="msg-r10" value="created_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="msg-swim" vertex="1">
+                    <mxGeometry y="262" width="300" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend" value="图例：🔑 主键 ｜ 📇 索引外键&lt;br&gt;&lt;b&gt;&lt;font color=&quot;#3535f0&quot;&gt;关系：account 1—N app / conversation / message；app 1—N app_config / conversation；conversation 1—N message；app 可选指向 app_config（发布/草稿）与 conversation（调试）&lt;/font&gt;&lt;/b&gt;" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=11;spacing=8;" parent="1" vertex="1">
+                    <mxGeometry x="880" y="440" width="420" height="72" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-acc-app" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.35;entryDx=0;entryDy=0;endArrow=ERmany;startArrow=ERone;startFill=0;" parent="1" source="acc-swim" target="app-swim" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-app-cfg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=ERmany;startArrow=ERone;startFill=0;" parent="1" source="app-swim" target="cfg-swim" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-app-conv" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=ERmany;startArrow=ERone;startFill=0;" parent="1" source="app-swim" target="conv-swim" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-acc-conv" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=ERmany;startArrow=ERone;startFill=0;" parent="1" source="acc-swim" target="conv-swim" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-conv-msg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.35;entryDx=0;entryDy=0;endArrow=ERmany;startArrow=ERone;startFill=0;" parent="1" source="conv-swim" target="msg-swim" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-acc-msg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;endArrow=ERmany;startArrow=ERone;startFill=0;dashed=1;" parent="1" source="acc-swim" target="msg-swim" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="980" y="507"/>
+                            <mxPoint x="955" y="507"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
