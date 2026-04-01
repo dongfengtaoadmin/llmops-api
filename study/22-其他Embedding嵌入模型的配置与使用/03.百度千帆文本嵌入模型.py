@@ -10,7 +10,7 @@ from langchain_community.embeddings.baidu_qianfan_endpoint import QianfanEmbeddi
 
 dotenv.load_dotenv()
 
-embeddings = QianfanEmbeddingsEndpoint()
+embeddings = QianfanEmbeddingsEndpoint(model="Embedding-V1")
 
 query_vector = embeddings.embed_query("我叫慕小课，我喜欢打篮球游泳")
 

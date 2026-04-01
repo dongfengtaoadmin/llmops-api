@@ -29,13 +29,13 @@ def cosine_similarity(vec1: list, vec2: list) -> float:
 # 1.创建文本嵌入模型
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
-# 2.嵌入文本
+# 2.嵌入查询文本
 query_vector = embeddings.embed_query("我叫慕小课，我喜欢打篮球")
 
 print(query_vector)
 print(len(query_vector))
 
-# 3.嵌入文档列表/字符串列表
+# 3.嵌入文档列表/字符串列表 将字符串列表中的每个字符串转换成向量返回
 documents_vector = embeddings.embed_documents([
     "我叫慕小课，我喜欢打篮球",
     "这个喜欢打篮球的人叫慕小课",
@@ -43,6 +43,6 @@ documents_vector = embeddings.embed_documents([
 ])
 print(len(documents_vector))
 
-# 4.计算余弦相似度
+# # 4.计算余弦相似度
 print("向量1和向量2的相似度:", cosine_similarity(documents_vector[0], documents_vector[1]))
 print("向量1和向量3的相似度:", cosine_similarity(documents_vector[0], documents_vector[2]))

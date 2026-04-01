@@ -7,6 +7,7 @@
 """
 import dotenv
 import numpy as np
+from pathlib import Path
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain.storage import LocalFileStore
 from langchain_openai import OpenAIEmbeddings
@@ -29,11 +30,12 @@ def cosine_similarity(vector1: list, vector2: list) -> float:
 
 
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+cache_dir = Path(__file__).resolve().parent / "cache"
 embeddings_with_cache = CacheBackedEmbeddings.from_bytes_store(
-    embeddings,
-    LocalFileStore("./cache/"),
-    namespace=embeddings.model,
-    query_embedding_cache=True,
+    embeddings, # 原始嵌入模型
+    LocalFileStore(str(cache_dir)), # 缓存文件存储路径（脚本同级目录）
+    namespace=embeddings.model, # 缓存命名空间
+    query_embedding_cache=True, # 是否缓存查询文本的嵌入向量
 )
 
 query_vector = embeddings_with_cache.embed_query("你好，我是慕小课，我喜欢打篮球")

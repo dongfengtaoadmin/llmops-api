@@ -6,10 +6,12 @@
 @File    : 01.Hugging Face本地嵌入模型.py
 """
 from langchain_huggingface import HuggingFaceEmbeddings
+from pathlib import Path
 
+embeddings_cache_dir = Path(__file__).resolve().parent / "embeddings"
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L12-v2",
-    cache_folder="./embeddings/"
+    cache_folder=str(embeddings_cache_dir)
 )
 
 query_vector = embeddings.embed_query("你好，我是慕小课，我喜欢打篮球游泳")

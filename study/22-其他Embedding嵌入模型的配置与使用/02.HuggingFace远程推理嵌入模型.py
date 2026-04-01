@@ -6,6 +6,7 @@
 @File    : 02.HuggingFace远程推理嵌入模型.py
 """
 import dotenv
+# 需要秘钥
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
 
 dotenv.load_dotenv()
