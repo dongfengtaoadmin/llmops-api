@@ -1,0 +1,22 @@
+# 本地开发用 Weaviate（≥1.27.0，与当前 weaviate-python 客户端兼容）
+# 启动：在本目录执行 docker compose up -d
+# 停止：docker compose down
+# 若本机已有旧版容器占用 8080，请先停止或删除：docker stop <容器名> && docker rm <容器名>
+services:
+  weaviate:
+    image: semitechnologies/weaviate:1.27.0
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    restart: on-failure
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      CLUSTER_HOSTNAME: node1
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+
+volumes:
+  weaviate_data:

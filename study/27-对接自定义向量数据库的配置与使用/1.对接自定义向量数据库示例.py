@@ -22,7 +22,8 @@ class MemoryVectorStore(VectorStore):
 
     def __init__(self, embedding: Embeddings):
         self._embedding = embedding
-
+        self.store = {}  # 每次初始化时清空，确保向量维度一致
+    # 将数据添加到向量数据库中
     def add_texts(self, texts: Iterable[str], metadatas: Optional[List[dict]] = None, **kwargs: Any) -> List[str]:
         """将数据添加到向量数据库中"""
         # 1.检测metadata的数据格式
@@ -31,6 +32,7 @@ class MemoryVectorStore(VectorStore):
 
         # 2.将数据转换成文本嵌入/向量和ids
         embeddings = self._embedding.embed_documents(texts)
+        # 有多少条数据，就生成多少个唯一的id
         ids = [str(uuid.uuid4()) for _ in texts]
 
         # 3.通过for循环组装数据记录
@@ -43,7 +45,7 @@ class MemoryVectorStore(VectorStore):
             }
 
         return ids
-
+    # 执行相似性搜索
     def similarity_search(self, query: str, k: int = 4, **kwargs: Any) -> List[Document]:
         """传入对应的query执行相似性搜索"""
         # 1.将query转换成向量
@@ -77,8 +79,13 @@ class MemoryVectorStore(VectorStore):
 
     @classmethod
     def _euclidean_distance(cls, vec1: list, vec2: list) -> float:
-        """计算两个向量的欧几里得距离"""
-        return np.linalg.norm(np.array(vec1) - np.array(vec2))
+        """计算两个向量的欧几里得距离。若两向量长度不一致，截断到较短一侧再算距离（兼容部分网关对批量/单条返回维度不一致的情况）。"""
+        a1 = np.asarray(vec1, dtype=np.float64)
+        a2 = np.asarray(vec2, dtype=np.float64)
+        n = min(a1.shape[0], a2.shape[0])
+        if a1.shape[0] != a2.shape[0]:
+            a1, a2 = a1[:n], a2[:n]
+        return float(np.linalg.norm(a1 - a2))
 
 
 dotenv.load_dotenv()
@@ -108,7 +115,8 @@ metadatas = [
     {"page": 9},
     {"page": 10},
 ]
-embedding = OpenAIEmbeddings(model="text-embedding-3-small")
+# text-embedding-3-small 支持 dimensions；显式指定可减少兼容网关对文档/查询返回不同维度的问题（官方默认多为 1536，部分网关固定为 768）
+embedding = OpenAIEmbeddings(model="text-embedding-3-small", dimensions=768)
 
 # 2.构建自定义向量数据库
 db = MemoryVectorStore(embedding=embedding)

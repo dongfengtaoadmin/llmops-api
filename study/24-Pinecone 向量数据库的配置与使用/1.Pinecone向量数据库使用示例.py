@@ -38,7 +38,7 @@ metadatas: list = [
     {"page": 10},
 ]
 db = PineconeVectorStore(index_name="llmops", embedding=embedding, namespace="dataset")
-# db.add_texts(texts, metadatas, namespace="dataset")
+db.add_texts(texts, metadatas, namespace="dataset")
 
 query = "我养了一只猫，叫笨笨"
-print(db.similarity_search_with_relevance_scores(query))
+# print(db.similarity_search_with_relevance_scores(query))

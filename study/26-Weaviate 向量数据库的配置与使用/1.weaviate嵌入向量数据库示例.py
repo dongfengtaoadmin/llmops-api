@@ -5,8 +5,10 @@
 @Author  : thezehui@gmail.com
 @File    : 1.weaviate嵌入向量数据库示例.py
 """
+import os
 import dotenv
 import weaviate
+from weaviate.auth import AuthApiKey
 from langchain_openai import OpenAIEmbeddings
 from langchain_weaviate import WeaviateVectorStore
 from weaviate.classes.query import Filter
@@ -40,27 +42,36 @@ metadatas = [
 ]
 
 # 2.创建连接客户端
-client = weaviate.connect_to_local("192.168.2.120", "8080")
+INDEX_NAME = "Dataset"
+client = weaviate.connect_to_local("localhost", "8080")
 # client = weaviate.connect_to_wcs(
-#     cluster_url="https://eftofnujtxqcsa0sn272jw.c0.us-west3.gcp.weaviate.cloud",
-#     auth_credentials=AuthApiKey("21pzYy0orl2dxH9xCoZG1O2b0euDeKJNEbB0"),
+#     cluster_url=os.environ.get("WEAVIATE_URL"),
+#     auth_credentials=AuthApiKey(os.environ.get("WEAVIATE_API_KEY")),
 # )
-embedding = OpenAIEmbeddings(model="text-embedding-3-small")
+try:
+    # 清空旧集合，避免与当前 embedding 维度不一致
+    # if client.collections.exists(INDEX_NAME):
+    #     client.collections.delete(INDEX_NAME)
 
-# 3.创建LangChain向量数据库实例
-db = WeaviateVectorStore(
-    client=client,
-    index_name="Dataset",
-    text_key="text",
-    embedding=embedding,
-)
+    embedding = OpenAIEmbeddings(model="text-embedding-3-small")
 
-# 4.添加数据
-ids = db.add_texts(texts, metadatas)
-print(ids)
+    # 3.创建LangChain向量数据库实例
+    db = WeaviateVectorStore(
+        client=client,
+        index_name=INDEX_NAME,
+        text_key="text",
+        embedding=embedding,
+    )
 
-# 5.执行相似性搜索
-filters = Filter.by_property("page").greater_or_equal(5)
-print(db.similarity_search_with_score("笨笨", filters=filters))
-retriever = db.as_retriever()
-print(retriever.invoke("笨笨"))
+    # 4.添加数据
+    # ids = db.add_texts(texts, metadatas)
+    # print(ids)
+
+    # 5.执行相似性搜索
+    filters = Filter.by_property("page").greater_or_equal(9)
+    # print(db.similarity_search_with_score("笨笨", filters=filters))
+    # 6.执行检索
+    retriever = db.as_retriever()
+    print(retriever.invoke("笨笨"))
+finally:
+    client.close()
