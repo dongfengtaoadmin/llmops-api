@@ -15,13 +15,12 @@ from weaviate.auth import AuthApiKey
 
 dotenv.load_dotenv()
 
+INDEX_NAME = "Dataset"
+client = weaviate.connect_to_local("localhost", "8080")
 # 1.构建向量数据库与检索器
 db = WeaviateVectorStore(
-    client=weaviate.connect_to_wcs(
-        cluster_url="https://eftofnujtxqcsa0sn272jw.c0.us-west3.gcp.weaviate.cloud",
-        auth_credentials=AuthApiKey("21pzYy0orl2dxH9xCoZG1O2b0euDeKJNEbB0"),
-    ),
-    index_name="DatasetDemo",
+    client=client,
+    index_name=INDEX_NAME,
     text_key="text",
     embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
 )

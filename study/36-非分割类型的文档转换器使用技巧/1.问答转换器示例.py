@@ -6,13 +6,25 @@
 @File    : 1.问答转换器示例.py
 """
 import dotenv
-from doctran import Doctran
 from langchain_community.document_transformers import DoctranQATransformer
 from langchain_core.documents import Document
-
-_ = Doctran
+from pydantic import Field
+from typing import Optional
 
 dotenv.load_dotenv()
+
+
+def _patch_doctran_config_for_pydantic_v2() -> None:
+    """doctran 的 DoctranConfig 在 Pydantic v2 下把 Optional 字段当成必填；库内构造时又未传入 openai_deployment_id。"""
+    import doctran.doctran as dm
+
+    class DoctranConfig(dm.DoctranConfig):
+        openai_deployment_id: Optional[str] = Field(default=None)
+
+    dm.DoctranConfig = DoctranConfig
+
+
+_patch_doctran_config_for_pydantic_v2()
 
 # 1.构建文档列表
 page_content = """机密文件 - 仅供内部使用
@@ -38,7 +50,7 @@ jason@psychic.dev"""
 documents = [Document(page_content=page_content)]
 
 # 2.构建问答转换器并转换
-qa_transformer = DoctranQATransformer(openai_api_model="gpt-3.5-turbo-16k")
+qa_transformer = DoctranQATransformer(openai_api_model="gpt-4o-mini") 
 transformer_documents = qa_transformer.transform_documents(documents)
 
 # 3.输出内容

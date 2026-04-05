@@ -14,9 +14,12 @@ from langchain_weaviate import WeaviateVectorStore
 from weaviate.auth import AuthApiKey
 
 dotenv.load_dotenv()
-
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from study.utils.path_utils import resolve_path_from_script
 # 1.构建加载器与分割器
-loader = UnstructuredMarkdownLoader("./项目API文档.md")
+loader = UnstructuredMarkdownLoader(resolve_path_from_script(__file__, "./项目API文档.md"))
 text_splitter = RecursiveCharacterTextSplitter(
     separators=["\n\n", "\n", "。|！|？", "\.\s|\!\s|\?\s", "；|;\s", "，|,\s", " ", "", ],
     is_separator_regex=True,
@@ -28,14 +31,12 @@ text_splitter = RecursiveCharacterTextSplitter(
 # 2.加载文档并分割
 documents = loader.load()
 chunks = text_splitter.split_documents(documents)
-
+INDEX_NAME = "Dataset"
+client = weaviate.connect_to_local("localhost", "8080")
 # 3.将数据存储到向量数据库
 db = WeaviateVectorStore(
-    client=weaviate.connect_to_wcs(
-        cluster_url="https://eftofnujtxqcsa0sn272jw.c0.us-west3.gcp.weaviate.cloud",
-        auth_credentials=AuthApiKey("21pzYy0orl2dxH9xCoZG1O2b0euDeKJNEbB0"),
-    ),
-    index_name="DatasetDemo",
+    client=client,
+    index_name=INDEX_NAME,
     text_key="text",
     embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
 )

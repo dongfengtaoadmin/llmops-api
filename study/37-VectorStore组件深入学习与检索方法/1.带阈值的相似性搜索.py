@@ -11,6 +11,7 @@ from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 
 dotenv.load_dotenv()
+# 无论是否先关都会 有一个结果返回，只是分数不同   ，这个时候就需要有一个分数的阈值 。
 
 embedding = OpenAIEmbeddings(model="text-embedding-3-small")
 

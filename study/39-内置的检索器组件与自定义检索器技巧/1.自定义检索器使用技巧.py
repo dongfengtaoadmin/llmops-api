@@ -15,13 +15,13 @@ from langchain_core.retrievers import BaseRetriever
 class CustomRetriever(BaseRetriever):
     """自定义检索器"""
     documents: list[Document]
-    k: int
+    k: int # 返回的文档数量
 
     def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
         """根据传入的query，获取相关联的文档列表"""
         matching_documents = []
         for document in self.documents:
-            if len(matching_documents) > self.k:
+            if len(matching_documents) >= self.k:
                 return matching_documents
             if query.lower() in document.page_content.lower():
                 matching_documents.append(document)
@@ -46,6 +46,6 @@ documents = [
 retriever = CustomRetriever(documents=documents, k=3)
 
 # 3.调用检索器获取搜索结果并打印
-retriever_documents = retriever.invoke("猫")
+retriever_documents = retriever.invoke("我")
 print(retriever_documents)
 print(len(retriever_documents))

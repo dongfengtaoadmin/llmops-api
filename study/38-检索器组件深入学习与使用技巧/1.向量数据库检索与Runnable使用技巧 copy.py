@@ -25,7 +25,7 @@ db = WeaviateVectorStore(
     client=client,
     index_name=INDEX_NAME,
     text_key="text",
-    embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
+    embedding=OpenAIEmbeddings(model="text-embedding-ada-002"),
 )
 
 # 2.转换检索器

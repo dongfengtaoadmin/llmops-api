@@ -10,7 +10,10 @@ from typing import List
 import jieba.analyse
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_text_splitters import TextSplitter
-
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from study.utils.path_utils import resolve_path_from_script
 
 class CustomTextSplitter(TextSplitter):
     """自定义文本分割器"""
@@ -26,17 +29,17 @@ class CustomTextSplitter(TextSplitter):
         # 1.根据传递的分隔符分割传入的文本
         split_texts = text.split(self._seperator)
 
-        # 2.提取分割出来的每一段文本的关键词，数量为self._top_k个
+        # 2.提取分割出来的每一段文本的关键词，数量为self._top_k个 使用 jieba 提取
         text_keywords = []
         for split_text in split_texts:
-            text_keywords.append(jieba.analyse.extract_tags(split_text, self._top_k))
+            text_keywords.append(jieba.analyse.extract_tags(split_text, self._top_k)) # 使用 jieba 提取关键词
 
         # 3.将关键词使用逗号进行拼接组成字符串列表并返回
         return [",".join(keywords) for keywords in text_keywords]
 
 
 # 1.创建加载器与分割器
-loader = UnstructuredFileLoader("./科幻短篇.txt")
+loader = UnstructuredFileLoader(resolve_path_from_script(__file__, "./科幻短篇.txt")) 
 text_splitter = CustomTextSplitter("\n\n", 10)
 
 # 2.加载文档并分割
