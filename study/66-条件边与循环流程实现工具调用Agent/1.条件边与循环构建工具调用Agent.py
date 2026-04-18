@@ -72,6 +72,7 @@ def tool_executor(state: State, config: dict) -> Any:
     tool_calls = state["messages"][-1].tool_calls
 
     # 2.根据找到的tool_calls去获取需要执行什么工具
+    # 键是工具的名字 值是工具本身 方便下面调用
     tools_by_name = {tool.name: tool for tool in tools}
 
     # 3.执行工具得到对应的结果
@@ -87,7 +88,7 @@ def tool_executor(state: State, config: dict) -> Any:
     # 4.将工具的执行结果作为工具消息更新到数据状态机中
     return {"messages": messages}
 
-
+# 返回值类型注解：函数必须返回这两个字符串之一
 def route(state: State, config: dict) -> Literal["tool_executor", "__end__"]:
     """通过路由来取检测下后续的返回节点是什么，返回的节点有2个，一个是工具执行，一个是结束节点"""
     ai_message = state["messages"][-1]
@@ -104,6 +105,13 @@ graph_builder.add_node("llm", chatbot)
 graph_builder.add_node("tool_executor", tool_executor)
 
 # 3.添加边
+# 开始
+#   ↓
+# 【llm节点】ChatGPT分析用户问题
+#   ↓
+# 【条件判断】route函数
+#   ├─ 需要工具？ → 【tool_executor节点】执行工具 → 返回【llm节点】
+#   └─ 不需要工具 → END（结束）
 graph_builder.set_entry_point("llm")
 graph_builder.add_conditional_edges("llm", route)
 graph_builder.add_edge("tool_executor", "llm")
@@ -113,6 +121,19 @@ graph = graph_builder.compile()
 
 # 5.调用图架构应用
 state = graph.invoke({"messages": [("human", "2024年北京半程马拉松的前3名成绩是多少")]})
+# 当用户问"2024年北京半程马拉松的前3名成绩是多少"时：
+
+# llm节点：ChatGPT判断需要搜索 → 生成 tool_calls
+
+# 条件边：检测到有 tool_calls → 进入 tool_executor
+
+# tool_executor节点：执行谷歌搜索 → 返回结果
+
+# 固定边：自动回到 llm 节点
+
+# llm节点：根据搜索结果生成最终答案
+
+# 条件边：没有新的 tool_calls → 结束
 
 for message in state["messages"]:
     print("消息类型: ", message.type)

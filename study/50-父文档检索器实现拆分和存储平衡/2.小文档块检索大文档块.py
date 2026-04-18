@@ -7,20 +7,23 @@
 """
 import dotenv
 import weaviate
-from langchain.retrievers import ParentDocumentRetriever
-from langchain.storage import LocalFileStore
+from langchain_classic.retrievers import ParentDocumentRetriever
+from langchain_classic.storage import LocalFileStore
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_weaviate import WeaviateVectorStore
 from weaviate.auth import AuthApiKey
-
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from study.utils.path_utils import resolve_path_from_script
 dotenv.load_dotenv()
 
 # 1.创建加载器与文档列表，并加载文档
 loaders = [
-    UnstructuredFileLoader("./电商产品数据.txt"),
-    UnstructuredFileLoader("./项目API文档.md"),
+    UnstructuredFileLoader(resolve_path_from_script(__file__, "电商产品数据.txt")),
+    UnstructuredFileLoader(resolve_path_from_script(__file__, "项目API文档.md")),
 ]
 docs = []
 for loader in loaders:
@@ -32,15 +35,12 @@ child_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50
 
 # 3.创建向量数据库与文档数据库
 vector_store = WeaviateVectorStore(
-    client=weaviate.connect_to_wcs(
-        cluster_url="https://mbakeruerziae6psyex7ng.c0.us-west3.gcp.weaviate.cloud",
-        auth_credentials=AuthApiKey("ZltPVa9ZSOxUcfafelsggGyyH6tnTYQYJvBx"),
-    ),
+    client=weaviate.connect_to_local("localhost", "8080"),
     index_name="ParentDocument",
     text_key="text",
-    embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
+    embedding=OpenAIEmbeddings(model="text-embedding-ada-002"),
 )
-store = LocalFileStore("./parent-document")
+store = LocalFileStore(resolve_path_from_script(__file__, "parent-document"))
 
 # 4.创建父文档检索器
 retriever = ParentDocumentRetriever(

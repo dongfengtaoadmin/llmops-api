@@ -15,7 +15,7 @@ from langchain_community.tools import GoogleSerperRun
 from langchain_community.utilities import GoogleSerperAPIWrapper
 from langchain_core.messages import ToolMessage
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import Field, BaseModel
+from pydantic import BaseModel, Field
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
@@ -33,8 +33,8 @@ class GoogleSerperArgsSchema(BaseModel):
 
 class GaodeWeatherTool(BaseTool):
     """根据传入的城市名查询天气"""
-    name = "gaode_weather"
-    description = "当你想询问天气或与天气相关的问题时的工具。"
+    name: str = "gaode_weather"
+    description: str = "当你想询问天气或与天气相关的问题时的工具。"
     args_schema: Type[BaseModel] = GaodeWeatherArgsSchema
 
     def _run(self, *args: Any, **kwargs: Any) -> str:
@@ -91,6 +91,8 @@ google_serper = GoogleSerperRun(
     args_schema=GoogleSerperArgsSchema,
     api_wrapper=GoogleSerperAPIWrapper(),
 )
+# tools 是一个列表，里面包含了两个工具对象
+# [gaode_weather, google_serper]
 tool_dict = {
     gaode_weather.name: gaode_weather,
     google_serper.name: google_serper,
@@ -108,6 +110,7 @@ prompt = ChatPromptTemplate.from_messages([
 
 # 3.创建大语言模型并绑定工具
 llm = ChatOpenAI(model="gpt-4o")
+# bind_tools 的 返回值还是大语言模型对象，但是这个大语言模型对象已经绑定了工具
 llm_with_tool = llm.bind_tools(tools=tools)
 
 # 4.创建链应用
@@ -125,6 +128,9 @@ else:
     # 7.将历史的系统消息、人类消息、AI消息组合
     messages = prompt.invoke(query).to_messages()
     messages.append(resp)
+
+    print("messages: ", messages)
+    print("respresp: ", resp)
 
     # 8.循环遍历所有工具调用信息
     for tool_call in tool_calls:

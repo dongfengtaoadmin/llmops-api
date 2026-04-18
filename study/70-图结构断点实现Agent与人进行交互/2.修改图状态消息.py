@@ -104,6 +104,15 @@ print(state)
 
 # 6.更新图的状态，去篡改工具消息
 graph_state = graph.get_state(config)
+
+print('=====================')
+
+print(graph_state)
+
+
+print('=====================')
+
+
 tool_message = ToolMessage(
     # id是告诉归纳函数我和原始数据重复了，请直接覆盖
     id=graph_state[0]["messages"][-1].id,
@@ -113,5 +122,7 @@ tool_message = ToolMessage(
     content="2024年北京半程马拉松的第一名为慕小课01:59:40，第二名为慕二课成绩为02:04:16，第三名为慕三课02:15:17"
 )
 print("下一个步骤:", graph_state[1])
+# graph.update_state() 会触发归纳函数 add_messages 的执行。
 graph.update_state(config, {"messages": [tool_message]})
+# None 表示不添加新输入，只是从上次暂停的地方继续执行
 print(graph.invoke(None, config)["messages"][-1].content)

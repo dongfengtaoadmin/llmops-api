@@ -18,5 +18,5 @@ llm = ChatOpenAI(model="gpt-4o")
 llm_with_tools = llm.bind_tools([dalle], tool_choice="openai_dalle")
 
 chain = llm_with_tools | (lambda msg: msg.tool_calls[0]["args"]) | dalle
-
+# 大模型收到问题后会 转换成一段描述图像的文本，然后调用 dalle 工具生成图像 地址
 print(chain.invoke("帮我绘制一张老爷爷爬山的图片"))

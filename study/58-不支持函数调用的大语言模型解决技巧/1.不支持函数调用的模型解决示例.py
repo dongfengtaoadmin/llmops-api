@@ -15,7 +15,7 @@ from langchain_community.tools import GoogleSerperRun
 from langchain_community.utilities import GoogleSerperAPIWrapper
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import Field, BaseModel
+from pydantic import BaseModel, Field
 from langchain_core.runnables import RunnableConfig, RunnablePassthrough
 from langchain_core.tools import BaseTool, render_text_description_and_args
 from langchain_openai import ChatOpenAI
@@ -131,7 +131,7 @@ prompt = ChatPromptTemplate.from_messages([
     ("human", "{query}")
 ]).partial(rendered_tools=render_text_description_and_args(tools))
 
-llm = ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 chain = prompt | llm | JsonOutputParser() | RunnablePassthrough.assign(output=invoke_tool)
 

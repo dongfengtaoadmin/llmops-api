@@ -45,9 +45,10 @@ class AgentState(TypedDict):
     xhs_content: Annotated[str, reduce_str]  # 小红书文案
 
 
-class LiveAgentState(AgentState, MessagesState):
+class LiveAgentState(MessagesState):
     """直播文案智能体状态"""
-    pass
+    query: str  # 原始问题
+    live_content: str  # 直播文案
 
 
 class XHSAgentState(AgentState):
@@ -64,12 +65,50 @@ def chatbot_live(state: LiveAgentState, config: RunnableConfig) -> Any:
             "你是一个拥有10年经验的直播文案专家，请根据用户提供的产品整理一篇直播带货脚本文案，如果在你的知识库内找不到关于该产品的信息，可以使用搜索工具。"
         ),
         ("human", "{query}"),
-        ("placeholder", "{chat_history}"),
+        ("placeholder", "{chat_history}"), # 加上这里的目的是什么？如果不加每次就 只会有系统消息和人类消息两条，但是加上后 就会把 工具调用的东西加上 和 ai 生成的消息再次给大模型
     ])
     chain = prompt | llm.bind_tools([google_serper])
 
+    print(state, '\n','chatbot_live', '\n') 
     # 2.调用链并生成ai消息
     ai_message = chain.invoke({"query": state["query"], "chat_history": state["messages"]})
+
+        # 第1轮（初始调用）
+        # python
+        # # 用户调用
+        # agent.invoke({"query": "潮汕牛肉丸"})
+
+        # # state 内容：
+        # {
+        #     "query": "潮汕牛肉丸",     # ✅ 有值
+        #     "live_content": None,
+        #     "xhs_content": None,
+        #     "messages": []              # 空列表
+        # }
+
+        # # chatbot_live 执行
+        # ai_message = chain.invoke({
+        #     "query": state["query"],      # "潮汕牛肉丸" ✅
+        #     "chat_history": state["messages"]  # []
+        # })
+        # 第2轮（工具执行后，再次进入 chatbot_live）
+        # python
+        # # 经过 tools 节点后，state 更新了：
+        # {
+        #     "query": "潮汕牛肉丸",     # ✅ 仍然存在！没有被删除
+        #     "live_content": None,
+        #     "xhs_content": None,
+        #     "messages": [               # 新增了消息历史
+        #         AIMessage(tool_calls=[...]),
+        #         ToolMessage(content="搜索结果...")
+        #     ]
+        # }
+
+        # # chatbot_live 再次执行
+        # ai_message = chain.invoke({
+        #     "query": state["query"],      # "潮汕牛肉丸" ✅ 仍然有值！
+        #     "chat_history": state["messages"]  # 包含历史消息
+        # })
 
     return {
         "messages": [ai_message],
@@ -97,7 +136,7 @@ def chatbot_xhs(state: XHSAgentState, config: RunnableConfig) -> Any:
         ("human", "{query}"),
     ])
     chain = prompt | llm | StrOutputParser()
-
+    print(state, '\n','chatbot_xhs', '\n') 
     # 2.调用链并生成内容更新状态
     return {"xhs_content": chain.invoke({"query": state["query"]})}
 
@@ -111,7 +150,7 @@ xhs_agent_graph.set_entry_point("chatbot_xhs")
 xhs_agent_graph.set_finish_point("chatbot_xhs")
 
 
-# 3.创建入口图并添加节点、边
+# 3.创建入口图并添加节点、边 起到一个开始节点的作用 这样才能让 其他子节点进行链接 它唯一的作用就是作为一个"分叉点"
 def parallel_node(state: AgentState, config: RunnableConfig) -> Any:
     return state
 
@@ -122,6 +161,7 @@ agent_graph.add_node("live_agent", live_agent_graph.compile())
 agent_graph.add_node("xhs_agent", xhs_agent_graph.compile())
 
 agent_graph.set_entry_point("parallel_node")
+# parallel_node 先执行 → 然后 live_agent 和 xhs_agent 读取同一个 state
 agent_graph.add_edge("parallel_node", "live_agent")
 agent_graph.add_edge("parallel_node", "xhs_agent")
 

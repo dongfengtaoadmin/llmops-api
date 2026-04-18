@@ -9,7 +9,7 @@ import os
 import dotenv
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field # 这里使用pydantic_v1，而不是pydantic 因为pydantic_v1是langchain_core的库，而pydantic是langchain的库，但是pydantic_v1已经废弃了，所以使用pydantic
 from langchain_openai import ChatOpenAI
 
 dotenv.load_dotenv()

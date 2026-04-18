@@ -48,17 +48,39 @@ tools = [google_serper, dalle]
 model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 # 3.使用预构建的函数创建ReACT智能体
+# 创建内存检查点
 checkpointer = MemorySaver()
-config = {"configurable": {"thread_id": 1}}
+config = {"configurable": {"thread_id": 1}} # thread_id 是一次标识符合 代表哪一个用户的请求 不同值 = 不同的独立对话 = 不共享记忆
 agent = create_react_agent(model=model, tools=tools, checkpointer=checkpointer)
 
 # 4.调用智能体并输出内容
 print(agent.invoke(
     {"messages": [("human", "你好，我叫慕小课，我喜欢游泳打球，你喜欢什么呢?")]},
-    config=config,
+    config=config, # 传入配置，启用检查点
 ))
 
 # 5.二次调用检测图结构程序是否存在记忆
 print(agent.invoke(
     {"messages": [("human", "你知道我叫什么吗?")]},
+    config=config, # 传入配置，启用检查点
 ))
+
+
+
+# 1. 创建存储空间
+# checkpointer = MemorySaver()  # storage = {}
+
+# 2. 定义配置
+# config = {"configurable": {"thread_id": 1}}
+
+# 3. 第一次调用 agent
+# agent.invoke(..., config=config)
+# 内部执行：
+# thread_id = config["configurable"]["thread_id"]  # 提取出 1
+# checkpointer.storage[1] = 当前状态  # 保存
+
+# 4. 第二次调用（同一个 config）
+# agent.invoke(..., config=config)
+# 内部执行：
+# thread_id = config["configurable"]["thread_id"]  # 还是提取出 1
+# 上次状态 = checkpointer.storage.get(1)  # 读取到之前的状态

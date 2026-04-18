@@ -30,13 +30,12 @@ messages = [
 llm = ChatOpenAI(model="gpt-4o-mini")
 
 update_messages = trim_messages(
-    messages,
-    max_tokens=80,
-    token_counter=llm,
-    strategy="first",
-    end_on="human",
-    allow_partial=False,
-    text_splitter=RecursiveCharacterTextSplitter(),
+    messages,           # 原始消息列表（包含3轮对话）
+    max_tokens=80,      # 最大允许80个token
+    token_counter=llm,  # 使用ChatOpenAI模型计算token数
+    strategy="first",   # "first"表示保留最前面的消息
+    end_on="human",     # 最后一条消息必须是人类消息
+    allow_partial=False, # 不允许截断消息（整条保留或整条删除）
+    text_splitter=RecursiveCharacterTextSplitter(), # 如果消息太长如何处理
 )
-
 print(update_messages)

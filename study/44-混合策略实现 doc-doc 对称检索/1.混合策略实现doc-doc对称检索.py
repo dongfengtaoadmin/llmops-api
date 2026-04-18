@@ -4,6 +4,18 @@
 @Time    : 2024/7/5 0:52
 @Author  : thezehui@gmail.com
 @File    : 1.混合策略实现doc-doc对称检索.py
+
+解决的问题: HyDE (Hypothetical Document Embeddings) 混合策略检索，解决用户查询与知识库文档之间的语义鸿沟问题。
+         传统检索直接用用户问题匹配文档，但用户问题与知识库文档在表述/风格上差异大时，检索效果差。
+         HyDE 让 LLM 先根据问题生成"假设性文档"，再用该文档检索，提高检索质量。
+
+使用场景:
+  1. 知识库问答系统 - 企业内部文档、产品FAQ智能问答
+  2. 专业领域问答 - 医疗、法律、金融等专业文档检索
+  3. 模糊问题检索 - 用户问题表述不清晰或不专业时
+  4. 跨风格检索 - 用户用口语提问，但知识库是专业文档格式
+
+不建议的场景：比较开放式的问题，比如："你有什么推荐的书吗？" 这种问题，因为这种问题很难生成假设性文档。而且会有一定偏见
 """
 from typing import List
 
@@ -39,6 +51,13 @@ class HyDERetriever(BaseRetriever):
             "文章: "
         )
 
+# 用户问题
+#   ↓ 包装成字典
+#   ↓ 填充 prompt
+#   ↓ LLM 生成"假设性文档"   ← HyDE 的核心
+#   ↓ 解析成纯字符串
+#   ↓ 拿去向量检索            ← 用假设性文档而不是原始问题去检索
+# 返回文档列表
         # 2.构建HyDE混合策略检索链
         chain = (
                 {"question": RunnablePassthrough()}
@@ -53,20 +72,17 @@ class HyDERetriever(BaseRetriever):
 
 # 1.构建向量数据库与检索器
 db = WeaviateVectorStore(
-    client=weaviate.connect_to_wcs(
-        cluster_url="https://mbakeruerziae6psyex7ng.c0.us-west3.gcp.weaviate.cloud",
-        auth_credentials=AuthApiKey("ZltPVa9ZSOxUcfafelsggGyyH6tnTYQYJvBx"),
-    ),
-    index_name="DatasetDemo",
+    client=weaviate.connect_to_local("localhost", "8080"),
+    index_name="Dataset",
     text_key="text",
-    embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
+    embedding=OpenAIEmbeddings(model="text-embedding-ada-002"),
 )
 retriever = db.as_retriever(search_type="mmr")
 
 # 2.创建HyDE检索器
 hyde_retriever = HyDERetriever(
     retriever=retriever,
-    llm=ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0),
+    llm=ChatOpenAI(model="gpt-4o-mini", temperature=0),
 )
 
 # 3.检索文档

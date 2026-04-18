@@ -5,7 +5,7 @@
 @Author  : thezehui@gmail.com
 @File    : 2.StructuredTool类方法创建工具.py
 """
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_core.tools import StructuredTool
 
 

@@ -4,10 +4,13 @@
 @Time    : 2024/7/5 16:28
 @Author  : thezehui@gmail.com
 @File    : 10.自查询检索器实现元数据过滤.py
+“自查询检索器实现元数据过滤”可以通俗地理解成：让AI自己从你的问题里，听出“言外之意”，并自动加上一层筛选条件再去查资料。这样就能更准确地回答用户的问题。
+这种就需要有元数据
+如果不用子查询语句的话 就会执行相似性搜索了
 """
 import dotenv
-from langchain.chains.query_constructor.schema import AttributeInfo
-from langchain.retrievers import SelfQueryRetriever
+from langchain_classic.chains.query_constructor.schema import AttributeInfo
+from langchain_classic.retrievers import SelfQueryRetriever
 from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
@@ -60,7 +63,7 @@ documents = [
 ]
 db = PineconeVectorStore(
     index_name="llmops",
-    embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
+    embedding=OpenAIEmbeddings(model="text-embedding-3-small", dimensions=512), # 设置维度为512匹配Pinecone index
     namespace="dataset",
     text_key="text"
 )
@@ -76,7 +79,7 @@ metadata_filed_info = [
 
 # 3.创建自查询检索
 self_query_retriever = SelfQueryRetriever.from_llm(
-    llm=ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0),
+    llm=ChatOpenAI(model="gpt-4o-mini", temperature=0),
     vectorstore=db,
     document_contents="电影的名字",
     metadata_field_info=metadata_filed_info,

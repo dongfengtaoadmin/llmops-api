@@ -85,12 +85,18 @@ graph_builder.add_node("llm", chatbot)
 graph_builder.add_node("tools", ToolNode(tools=tools))
 
 # 3.添加边
+# 但实际上 add_edge 和 add_conditional_edges 只是在构建图结构（定义节点之间的连接关系），并不是立即执行这些边。
 graph_builder.add_edge(START, "llm")
 graph_builder.add_edge("tools", "llm")
 graph_builder.add_conditional_edges("llm", route)
 
 # 4.编译图为Runnable可运行组件
+# 断点是在检查点之上的
 checkpointer = MemorySaver()
+# 这个断点实现的核心是 LangGraph 的检查点（Checkpointer）机制 + 中断（Interrupt）机制 
+# interrupt_before：在节点执行之前暂停
+
+# interrupt_after：在节点执行之后暂停
 graph = graph_builder.compile(checkpointer=checkpointer, interrupt_before=["tools"])
 
 # 5.调用图架构应用
@@ -106,6 +112,7 @@ if hasattr(state["messages"][-1], "tool_calls") and len(state["messages"][-1].to
     print("现在准备调用工具: ", state["messages"][-1].tool_calls)
     human_input = input("如果需要执行工具请输入yes，否则请输入no: ")
     if human_input.lower() == "yes":
+        # 不是"恢复执行"（像进程恢复那样），而是基于保存的状态重新执行
         print(graph.invoke(None, config)["messages"][-1].content)
     else:
         print("图程序执行完毕")

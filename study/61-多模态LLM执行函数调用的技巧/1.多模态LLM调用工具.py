@@ -13,7 +13,7 @@ import dotenv
 import requests
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import Field, BaseModel
+from pydantic import BaseModel, Field
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
@@ -27,8 +27,8 @@ class GaodeWeatherArgsSchema(BaseModel):
 
 class GaodeWeatherTool(BaseTool):
     """根据传入的城市名查询天气"""
-    name = "gaode_weather"
-    description = "当你想询问天气或与天气相关的问题时的工具。"
+    name: str = "gaode_weather"
+    description: str = "当你想询问天气或与天气相关的问题时的工具。"
     args_schema: Type[BaseModel] = GaodeWeatherArgsSchema
 
     def _run(self, *args: Any, **kwargs: Any) -> str:
@@ -87,7 +87,7 @@ weather_prompt = ChatPromptTemplate.from_template("""请整理下传递的城市
 </weather>""")
 
 # 2.构建LLM并绑定工具
-llm = ChatOpenAI(model="gpt-4o")
+llm = ChatOpenAI(model="gpt-4o-mini")
 llm_with_tools = llm.bind_tools(tools=[GaodeWeatherTool()], tool_choice="gaode_weather")
 
 # 3.创建链应用并执行

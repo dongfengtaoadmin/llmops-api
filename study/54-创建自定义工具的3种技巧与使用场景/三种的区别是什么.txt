@@ -1,0 +1,48 @@
+三种创建自定义工具的区别                                                   
+             
+  ┌────────┬───────────────┬────────────────────────┬───────────────────┐    
+  │  特性  │ @tool 装饰器  │ StructuredTool.from_fu │   BaseTool 子类   │
+  │        │               │         nction         │                   │    
+  ├────────┼───────────────┼────────────────────────┼───────────────────┤    
+  │ 代码量 │ 最少（1行装饰 │ 中等（需要创建工具实例 │ 最多（需定义完整  │    
+  │        │ 器）          │ ）                     │ 类）              │    
+  ├────────┼───────────────┼────────────────────────┼───────────────────┤
+  │ 异步支 │ 自动推断      │ 需手动传入 coroutine   │ 需手动实现 _run   │
+  │ 持     │               │                        │ 和 arun           │
+  ├────────┼───────────────┼────────────────────────┼───────────────────┤
+  │ 适用场 │ 简单同步函数  │ 需要混合同步/异步      │ 复杂逻辑、需要继  │
+  │ 景     │               │                        │ 承扩展            │
+  ├────────┼───────────────┼────────────────────────┼───────────────────┤
+  │ 灵活性 │ 低            │ 中                     │ 高                │
+  └────────┴───────────────┴────────────────────────┴───────────────────┘
+
+  详细说明
+
+  1. @tool 装饰器 - 最简洁
+  @tool("multiply_tool", return_direct=True)
+  def multiply(a: int, b: int) -> int:
+      return a * b
+  - 自动从函数签名提取参数和描述
+  - 自动处理同步函数，异步需额外配置
+  - 适合快速原型开发
+
+  2. StructuredTool.from_function - 平衡方案
+  calculator = StructuredTool.from_function(
+      func=multiply,
+      coroutine=amultiply,  # 显式提供异步版本
+      name="multiply_tool",
+      return_direct=True,
+  )
+  - 可显式控制同步/异步函数
+  - 适合需要同时支持同步和异步调用的场景
+
+  3. BaseTool 子类 - 最灵活
+  class MultiplyTool(BaseTool):
+      name: str = "multiply_tool"
+      args_schema: Type[BaseModel] = MultiplyInput
+
+      def _run(self, *args, **kwargs):
+          return kwargs.get("a") * kwargs.get("b")
+  - 完全控制工具行为
+  - 可重写 run、arun、invoke 等方法
+  - 适合复杂业务逻辑、依赖注入、状态管理等场景

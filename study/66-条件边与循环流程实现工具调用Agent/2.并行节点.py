@@ -37,8 +37,9 @@ graph_builder.add_node("parallel1", parallel1)
 graph_builder.add_node("parallel2", parallel2)
 graph_builder.add_node("chat_end", chat_end)
 
-graph_builder.set_entry_point("chat_bot")
+graph_builder.set_entry_point("chat_bot ")
 graph_builder.set_finish_point("chat_end")
+# 这里是并行的关键吗？
 graph_builder.add_edge("chat_bot", "parallel1")
 graph_builder.add_edge("chat_bot", "parallel2")
 graph_builder.add_edge("parallel2", "chat_end")

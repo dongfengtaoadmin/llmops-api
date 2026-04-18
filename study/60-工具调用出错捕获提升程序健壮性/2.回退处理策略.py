@@ -19,12 +19,17 @@ def complex_tool(int_arg: int, float_arg: float, dict_arg: dict) -> int:
 
 
 # 1.创建大语言模型并绑定工具
-llm = ChatOpenAI(model="gpt-3.5-turbo-16k").bind_tools([complex_tool])
+llm = ChatOpenAI(model="gpt-4o-mini").bind_tools([complex_tool])
 better_llm = ChatOpenAI(model="gpt-4o").bind_tools([complex_tool])
 
 # 2.创建链并执行工具
 better_chain = (better_llm | (lambda msg: msg.tool_calls[0]["args"]) | complex_tool)
-chain = (llm | (lambda msg: msg.tool_calls[0]["args"]) | complex_tool).with_fallbacks([better_chain])
+def safe_get_args(msg):
+    if not msg.tool_calls:
+        # 可以抛出特定异常让 fallback 生效
+        raise ValueError("没有工具调用")
+    return msg.tool_calls[0]["args"]
 
-# 3.调用链
-print(chain.invoke("使用复杂工具，对应参数为5和2.1，不要忘记了dict_arg参数"))
+chain = (llm | safe_get_args | complex_tool).with_fallbacks([better_chain])
+result = llm.invoke("使用复杂工具，对应参数为5和2.1，dict_arg参数使用{'key': 'value'}")
+# print(result.tool_calls)  # 看看是否为空

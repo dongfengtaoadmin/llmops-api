@@ -8,8 +8,8 @@
 import uuid
 
 import dotenv
-from langchain.retrievers import MultiVectorRetriever
-from langchain.storage import LocalFileStore
+from langchain_classic.retrievers import MultiVectorRetriever
+from langchain_classic.storage import LocalFileStore
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
@@ -17,11 +17,15 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+import os
 
 dotenv.load_dotenv()
 
+# 获取当前脚本所在目录
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 # 1.创建加载器、文本分割器并处理文档
-loader = UnstructuredFileLoader("./电商产品数据.txt")
+loader = UnstructuredFileLoader(os.path.join(script_dir, "电商产品数据.txt"))
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 docs = loader.load_and_split(text_splitter)
 
@@ -29,7 +33,7 @@ docs = loader.load_and_split(text_splitter)
 summary_chain = (
         {"doc": lambda x: x.page_content}
         | ChatPromptTemplate.from_template("请总结以下文档的内容：\n\n{doc}")
-        | ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0)
+        | ChatOpenAI(model="gpt-4o-mini", temperature=0)
         | StrOutputParser()
 )
 
@@ -42,9 +46,17 @@ summary_docs = [
     Document(page_content=summary, metadata={"doc_id": doc_ids[idx]})
     for idx, summary in enumerate(summaries)
 ]
+# 等价的传统写法
+# summary_docs = []
+# for idx, summary in enumerate(summaries):
+#     doc = Document(
+#         page_content=summary,
+#         metadata={"doc_id": doc_ids[idx]}
+#     )
+#     summary_docs.append(doc)
 
 # 5.构建文档数据库与向量数据库
-byte_store = LocalFileStore("./multy-vector")
+byte_store = LocalFileStore(os.path.join(script_dir, "multy-vector"))
 db = FAISS.from_documents(
     summary_docs,
     embedding=OpenAIEmbeddings(model="text-embedding-3-small"),

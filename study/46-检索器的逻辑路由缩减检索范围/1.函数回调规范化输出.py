@@ -8,7 +8,7 @@
 from typing import Literal
 
 import dotenv
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 
 dotenv.load_dotenv()
@@ -22,7 +22,7 @@ class RouteQuery(BaseModel):
 
 
 # 1.创建绑定结构化输出的大语言模型
-llm = ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0) # 这里可以使用gpt-4o-mini，但是需要更高的成本
 structured_llm = llm.with_structured_output(RouteQuery)
 
 # 2.构建一个问题

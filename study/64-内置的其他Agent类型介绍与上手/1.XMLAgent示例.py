@@ -74,7 +74,9 @@ Question: {input}
 # 3.创建大语言模型
 llm = ChatOpenAI(model="gpt-4o-mini")
 
-# 4.创建agent与agent执行者
+# 4.创建agent与agent执行者 XMLAgent 是基于 XML 的 Agent，所以需要使用 create_xml_agent 创建 agent
+# 优点：通用性强，即使模型不支持 Tool Calling 也能用。
+# 缺点：依赖提示词工程，可靠性较低；不支持复杂工具的嵌套参数（如列表或字典），仅接受字符串输入。
 agent = create_xml_agent(
     prompt=prompt,
     llm=llm,

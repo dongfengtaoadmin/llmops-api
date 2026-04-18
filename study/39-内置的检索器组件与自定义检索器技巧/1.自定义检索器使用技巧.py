@@ -47,5 +47,6 @@ retriever = CustomRetriever(documents=documents, k=3)
 
 # 3.调用检索器获取搜索结果并打印
 retriever_documents = retriever.invoke("我")
-print(retriever_documents)
+for i, doc in enumerate(retriever_documents, start=1):
+    print(f"[{i}] {doc}")
 print(len(retriever_documents))

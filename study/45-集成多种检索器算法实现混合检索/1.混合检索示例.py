@@ -6,7 +6,7 @@
 @File    : 7.混合检索示例.py
 """
 import dotenv
-from langchain.retrievers import EnsembleRetriever
+from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
@@ -33,13 +33,13 @@ bm25_retriever = BM25Retriever.from_documents(documents)
 bm25_retriever.k = 4
 
 # 3.创建FAISS向量数据库检索
-faiss_db = FAISS.from_documents(documents, embedding=OpenAIEmbeddings(model="text-embedding-3-small"))
+faiss_db = FAISS.from_documents(documents, embedding=OpenAIEmbeddings(model="text-embedding-ada-002"))
 faiss_retriever = faiss_db.as_retriever(search_kwargs={"k": 4})
 
 # 4.初始化集成检索器
 ensemble_retriever = EnsembleRetriever(
     retrievers=[bm25_retriever, faiss_retriever],
-    weights=[0.5, 0.5],
+    weights=[0.5, 0.5], # 权重各站一半
 )
 
 # 5.执行检索

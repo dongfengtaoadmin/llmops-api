@@ -4,6 +4,23 @@
 @Time    : 2024/7/4 19:18
 @Author  : thezehui@gmail.com
 @File    : 2.回答回退策略检索器.py
+
+前置问题的理解
+"前置"的意思是——在回答这个问题之前，需要先搞清楚的更基础的问题。
+Step-Back快记： 生成更前置的回答回退策略扩大检索范围
+【本文件主要讲什么】
+实现 RAG 中的「Step-Back / 回答回退」检索：先用 LLM 把用户的具体问题改写成更一般、更前置的问题，
+再用改写后的问题去做向量检索。这样检索范围更宽，更容易命中背景类、概括类文档，而不是只盯着字面细节。
+
+【典型场景】
+- 用户问题很细、很具体，但知识库里多是概述、教程、FAQ，直接检索匹配度低。
+- 需要「先理解大类/前提，再落到细节」时：例如从「某课程是否存在」回退到「平台有哪些课程」。
+- 希望减少因问法过窄导致的漏检，用更抽象的一跳查询扩大召回。
+
+【工作中怎么用】
+- 封装成 LangChain 的 BaseRetriever 子类，挂进现有 RAG 链，替换或并联普通 retriever。
+- 底层 retriever 仍用你们现有的向量库（此处示例为 Weaviate + MMR）；回退问题生成用小型、低温 LLM 即可控制成本。
+- 上线前需调 few-shot 示例与 system 提示，使「回退力度」符合业务（别太泛导致噪声过多）。
 """
 from typing import List
 
@@ -34,6 +51,7 @@ class StepBackRetriever(BaseRetriever):
         """根据传递的query执行问题回退并检索"""
         # 1.构建少量示例提示模板
         examples = [
+            # 这里的 output 就是前置问题 
             {"input": "慕课网上有关于AI应用开发的课程吗？", "output": "慕课网上有哪些课程？"},
             {"input": "慕小课出生在哪个国家？", "output": "慕小课的人生经历是什么样的？"},
             {"input": "司机可以开快车吗？", "output": "司机可以做什么？"},
@@ -69,20 +87,17 @@ class StepBackRetriever(BaseRetriever):
 
 # 1.构建向量数据库与检索器
 db = WeaviateVectorStore(
-    client=weaviate.connect_to_wcs(
-        cluster_url="https://mbakeruerziae6psyex7ng.c0.us-west3.gcp.weaviate.cloud",
-        auth_credentials=AuthApiKey("ZltPVa9ZSOxUcfafelsggGyyH6tnTYQYJvBx"),
-    ),
-    index_name="DatasetDemo",
+    client=weaviate.connect_to_local("localhost", "8080"),
+    index_name="Dataset",
     text_key="text",
-    embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
+    embedding=OpenAIEmbeddings(model="text-embedding-ada-002"),
 )
 retriever = db.as_retriever(search_type="mmr")
 
 # 2.创建回答回退检索器
 step_back_retriever = StepBackRetriever(
     retriever=retriever,
-    llm=ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0),
+    llm=ChatOpenAI(model="gpt-4o-mini", temperature=0),
 )
 
 # 3.检索文档

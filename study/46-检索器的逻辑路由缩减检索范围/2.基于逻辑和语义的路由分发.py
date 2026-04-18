@@ -9,7 +9,7 @@ from typing import Literal
 
 import dotenv
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field # 这里使用pydantic_v1，而不是pydantic 因为pydantic_v1是langchain_core的库，而pydantic是langchain的库，但是pydantic_v1已经废弃了，所以使用pydantic
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI
 
@@ -34,7 +34,7 @@ def choose_route(result: RouteQuery) -> str:
 
 
 # 1.构建大语言模型并进行结构化输出
-llm = ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 structured_llm = llm.with_structured_output(RouteQuery)
 
 # 2.创建路由逻辑链

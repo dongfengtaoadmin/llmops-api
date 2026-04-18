@@ -45,6 +45,17 @@ dalle = OpenAIDALLEImageGenerationTool(
 tools = [google_serper, dalle]
 
 # 2.定义工具调用agent提示词模板
+# 第1步：用户输入 → agent_scratchpad = []
+#         ↓
+# 第2步：LLM 判断需要调用 dalle 工具
+#         ↓
+# 第3步：AgentExecutor 自动将"调用工具"的记录写入 agent_scratchpad
+#         ↓
+# 第4步：调用 dalle 工具生成图片
+#         ↓
+# 第5步：将工具返回结果写入 agent_scratchpad
+#         ↓
+# 第6步：LLM 根据 agent_scratchpad 中的信息生成最终回答
 prompt = ChatPromptTemplate.from_messages([
     ("system", "你是由OpenAI开发的聊天机器人，善于帮助用户解决问题。"),
     ("placeholder", "{chat_history}"),
@@ -61,6 +72,9 @@ agent = create_tool_calling_agent(
     llm=llm,
     tools=tools,
 )
+
+# AgentExecutor 会自动将 "调用工具" 的记录写入 agent_scratchpad
+
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 print(agent_executor.invoke({"input": "帮我绘制一幅鲨鱼在天上游泳的场景"}))

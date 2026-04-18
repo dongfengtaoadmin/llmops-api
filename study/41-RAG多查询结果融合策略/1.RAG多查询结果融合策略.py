@@ -10,7 +10,7 @@ from typing import List
 import dotenv
 import weaviate
 from langchain.load import dumps, loads
-from langchain.retrievers import MultiQueryRetriever
+from langchain_classic.retrievers import MultiQueryRetriever
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
@@ -19,6 +19,9 @@ from weaviate.auth import AuthApiKey
 
 dotenv.load_dotenv()
 
+# 本质区别就一句话：
+# 普通多查询靠"出现过"来决定入选，RRF 靠"在多少条查询里出现、排名多靠前"来决定入选。
+# 多条查询反复命中同一篇文档，恰恰说明这篇文档从多个角度来看都相关，这才是真正高质量的召回结果。
 
 class RAGFusionRetriever(MultiQueryRetriever):
     """RAG多查询结果融合策略检索器"""
@@ -63,19 +66,16 @@ class RAGFusionRetriever(MultiQueryRetriever):
 
 # 1.构建向量数据库与检索器
 db = WeaviateVectorStore(
-    client=weaviate.connect_to_wcs(
-        cluster_url="https://mbakeruerziae6psyex7ng.c0.us-west3.gcp.weaviate.cloud",
-        auth_credentials=AuthApiKey("ZltPVa9ZSOxUcfafelsggGyyH6tnTYQYJvBx"),
-    ),
-    index_name="DatasetDemo",
+    client=weaviate.connect_to_local("localhost", "8080"),
+    index_name="Dataset",
     text_key="text",
-    embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
+    embedding=OpenAIEmbeddings(model="text-embedding-ada-002"),
 )
 retriever = db.as_retriever(search_type="mmr")
 
 rag_fusion_retriever = RAGFusionRetriever.from_llm(
     retriever=retriever,
-    llm=ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0),
+    llm=ChatOpenAI(model="gpt-4o-mini", temperature=0),
 )
 
 # 3.执行检索
