@@ -16,6 +16,22 @@ python -m app.http.app
 
 
 
+启动方式：
+                                                                                                                                                                                                             
+# 开发模式（带热更新）
+python start.py                                                                                                                                                                                            
+                                                        
+# 生产模式
+python start.py --prod
+
+# 指定端口
+python start.py --port 8080
+
+或者使用 shell 脚本：
+
+./start.sh        # 开发模式
+./start.sh prod   # 生产模式
+
 
 
 

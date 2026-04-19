@@ -12,7 +12,7 @@ from langchain_community.tools.openai_dalle_image_generation import OpenAIDALLEI
 from langchain_community.utilities import GoogleSerperAPIWrapper
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 
 dotenv.load_dotenv()

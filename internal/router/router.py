@@ -14,7 +14,7 @@ class Router:
         # 创建一个蓝图
         # 1.创建一个蓝图
         bp = Blueprint("llmops", __name__, url_prefix="")
-        # bp.add_url_rule('/ping', view_func=self.app_handler.ping)
+        bp.add_url_rule('/ping', view_func=self.app_handler.ping)
         # bp.add_url_rule('/app/completion', view_func=self.app_handler.completion, methods=['POST'])
         # # 创建应用
         # bp.add_url_rule("/app", methods=["POST"], view_func=self.app_handler.create_app)

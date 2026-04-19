@@ -7,7 +7,7 @@ from injector import inject
 from flask import request, jsonify
 from openai import OpenAI
 from langchain.memory import ConversationBufferWindowMemory
-from langchain.memory.chat_message_histories import FileChatMessageHistory
+from langchain_community.chat_message_histories import FileChatMessageHistory
 from operator import itemgetter
 # 表示  从 internal.schema.app_schema 中导入 CompletionReq 类
 from internal.schema.app_schema import CompletionReq
@@ -111,8 +111,8 @@ class AppHandler:
         return success_json({"content": content})
 
     def ping(self):
-        google_serper = self.provider_factory.get_tool(provider_name="google", tool_name="google_serper")
+        google_serper = self.builtin_provider_manager.get_tool(provider_name="google", tool_name="google_serper")()
         print(google_serper)
         print(google_serper.invoke("2024年北京半程马拉松的前3名成绩是多少？"))
         return success_json()
-        # raise FailException("数据未找到")
+        # raise FailException("数据未找到") 

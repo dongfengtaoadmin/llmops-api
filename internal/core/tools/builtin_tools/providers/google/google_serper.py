@@ -20,7 +20,7 @@ Google Serper 搜索工具封装
 """
 from langchain_community.tools import GoogleSerperRun
 from langchain_community.utilities import GoogleSerperAPIWrapper
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_core.tools import BaseTool
 
 from internal.lib.helper import add_attribute
