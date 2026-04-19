@@ -26,9 +26,11 @@ class ToolParam(BaseModel):
     type: ToolParamType  # 参数的类型
     required: bool = False  # 是否必填
     default: Optional[Any] = None  # 默认值
+    # Optional 表示可有可无
     min: Optional[float] = None  # 最小值
     max: Optional[float] = None  # 最大值
-    options: list[dict[str, Any]] = Field(default_factory=list)  # 下拉菜单选项列表
+    # Pydantic 的解决方案：default_factory 确保每个实例独立 （解决定义的时候就是同一个地址）
+    options: list[dict[str, Any]] = Field(default_factory=list)  # 下拉菜单选项列表 
 
 
 class ToolEntity(BaseModel):

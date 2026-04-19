@@ -1,0 +1,4 @@
+name: gaode_ip
+label: 高德IP定位
+description: 根据传递的IP地址查询该IP对应的地理位置信息，不传IP则自动定位当前设备。
+params: [ ]

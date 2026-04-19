@@ -6,5 +6,6 @@
 @File    : __init__.py.py
 """
 from .gaode_weather import gaode_weather
+from .gaode_ip import gaode_ip
 
-__all__ = ["gaode_weather"]
+__all__ = ["gaode_weather", "gaode_ip"]
