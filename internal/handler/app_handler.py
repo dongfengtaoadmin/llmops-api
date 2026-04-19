@@ -13,7 +13,6 @@ from operator import itemgetter
 from internal.schema.app_schema import CompletionReq
 from pkg.response import success_json, validate_error_json, success_message
 from internal.exception import FailException
-from internal.service.app_service import AppService
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda, RunnableConfig
 from langchain_core.tracers.schemas import Run
 from langchain_core.memory import BaseMemory
@@ -21,10 +20,22 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
+
+from internal.schema.app_schema import CompletionReq
+
+from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+from internal.service import AppService, VectorDatabaseService
+from pkg.response import success_json, validate_error_json, success_message
+
+
+
 @inject
 @dataclass
 class AppHandler:
     app_service: AppService
+    vector_database_service: VectorDatabaseService
+    builtin_provider_manager: BuiltinProviderManager
+
     def create_app(self):
         """创建应用"""
         app = self.app_service.create_app()
@@ -69,8 +80,9 @@ class AppHandler:
             return validate_error_json(req.errors)
 
         # 2.创建prompt与记忆
+        system_prompt = "你是一个强大的聊天机器人，能根据对应的上下文和历史对话信息回复用户问题。\n\n<context>{context}</context>"
         prompt = ChatPromptTemplate.from_messages([
-            ("system", "你是一个强大的聊天机器人，能根据用户的提问回复对应的问题"),
+            ("system", system_prompt),
             MessagesPlaceholder("history"),
             ("human", "{query}"),
         ])
@@ -82,22 +94,25 @@ class AppHandler:
             chat_memory=FileChatMessageHistory("./storage/memory/chat_history.txt"),
         )
 
-    
         # 3.创建llm
         llm = ChatOpenAI(model="gpt-4o-mini")
 
-
         # 4.创建链应用
+        retriever = self.vector_database_service.get_retriever() | self.vector_database_service.combine_documents
         chain = (RunnablePassthrough.assign(
-            history=RunnableLambda(self._load_memory_variables) | itemgetter("history")
+            history=RunnableLambda(self._load_memory_variables) | itemgetter("history"),
+            context=itemgetter("query") | retriever
         ) | prompt | llm | StrOutputParser()).with_listeners(on_end=self._save_context)
 
         # 5.调用链生成内容
         chain_input = {"query": req.query.data}
-        content = chain.invoke(chain_input,config={"configurable": {"memory": memory}})
-    
+        content = chain.invoke(chain_input, config={"configurable": {"memory": memory}})
+
         return success_json({"content": content})
 
-
     def ping(self):
-        raise FailException(message="测试失败")
+        google_serper = self.provider_factory.get_tool(provider_name="google", tool_name="google_serper")
+        print(google_serper)
+        print(google_serper.invoke("2024年北京半程马拉松的前3名成绩是多少？"))
+        return success_json()
+        # raise FailException("数据未找到")
