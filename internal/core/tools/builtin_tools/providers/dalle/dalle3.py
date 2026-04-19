@@ -16,7 +16,7 @@ from internal.lib.helper import add_attribute
 class Dalle3ArgsSchema(BaseModel):
     query: str = Field(description="输入应该是生成图像的文本提示(prompt)")
 
-
+# python 中装饰可以取到函数本身 并且添加任意的属性，或者修改参数 下面就是 添加 Dalle3ArgsSchema 的属性
 @add_attribute("args_schema", Dalle3ArgsSchema)
 def dalle3(**kwargs) -> BaseTool:
     """返回dalle3绘图的LangChain工具"""

@@ -78,6 +78,7 @@ def add_attribute(attr_name: str, attr_value: Any):
         因此对原对象的其他功能没有任何副作用。
     """
 
+    # 定义装饰圈 需要有装饰器本身
     def decorator(func):
         setattr(func, attr_name, attr_value)
         return func

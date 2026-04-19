@@ -1,31 +1,46 @@
-from internal.handler import AppHandler
+from dataclasses import dataclass
+from internal.handler import AppHandler, BuiltinToolHandler
 from flask import Flask, Blueprint
 from injector import inject
 
-
+@inject
+@dataclass
 class Router:
     """路由"""
 
-    @inject
-    def __init__(self, app_handler: AppHandler):
-        self.app_handler = app_handler
+    app_handler:AppHandler
+    builtin_tool_handler: BuiltinToolHandler
 
     def register_routes(self, app: Flask):
-        # 创建一个蓝图
+        """注册路由"""
         # 1.创建一个蓝图
         bp = Blueprint("llmops", __name__, url_prefix="")
-        bp.add_url_rule('/ping', view_func=self.app_handler.ping)
-        # bp.add_url_rule('/app/completion', view_func=self.app_handler.completion, methods=['POST'])
-        # # 创建应用
-        # bp.add_url_rule("/app", methods=["POST"], view_func=self.app_handler.create_app)
-        # # 获取应用
-        # bp.add_url_rule("/app/<uuid:id>", view_func=self.app_handler.get_app)
-        # # 更新应用
-        # bp.add_url_rule("/app/<uuid:id>", methods=["PUT"], view_func=self.app_handler.update_app)
-        # # 删除应用
-        # bp.add_url_rule("/app/<uuid:id>/delete", methods=["DELETE"], view_func=self.app_handler.delete_app)
-        bp.add_url_rule("/apps/<uuid:app_id>/debug", methods=["POST"], view_func=self.app_handler.debug)
 
+        # 2.将url与对应的控制器方法做绑定
+        bp.add_url_rule("/ping", view_func=self.app_handler.ping)
+        bp.add_url_rule("/apps/<uuid:app_id>/debug", methods=["POST"], view_func=self.app_handler.debug)
+        bp.add_url_rule("/app", methods=["POST"], view_func=self.app_handler.create_app)
+        bp.add_url_rule("/app/<uuid:id>", view_func=self.app_handler.get_app)
+        bp.add_url_rule("/app/<uuid:id>", methods=["POST"], view_func=self.app_handler.update_app)
+        bp.add_url_rule("/app/<uuid:id>/delete", methods=["POST"], view_func=self.app_handler.delete_app)
+
+
+        # 3.内置插件广场模块
+        bp.add_url_rule("/builtin-tools", view_func=self.builtin_tool_handler.get_builtin_tools)
+        bp.add_url_rule(
+            "/builtin-tools/<string:provider_name>/tools/<string:tool_name>",
+            view_func=self.builtin_tool_handler.get_provider_tool,
+        )
+        bp.add_url_rule(
+            "/builtin-tools/<string:provider_name>/icon",
+            view_func=self.builtin_tool_handler.get_provider_icon,
+        )
+        bp.add_url_rule(
+            "/builtin-tools/categories",
+            view_func=self.builtin_tool_handler.get_categories,
+        )
+
+        # 在应用上去注册蓝图
         app.register_blueprint(bp)
 
 
