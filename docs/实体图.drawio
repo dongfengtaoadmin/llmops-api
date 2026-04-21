@@ -142,7 +142,7 @@
                 <mxCell id="msg-r10" value="created_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="msg-swim" vertex="1">
                     <mxGeometry y="262" width="300" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="legend" value="图例：🔑 主键 ｜ 📇 索引外键&lt;br&gt;&lt;b&gt;&lt;font color=&quot;#3535f0&quot;&gt;关系：account 1—N app / conversation / message；app 1—N app_config / conversation；conversation 1—N message；app 可选指向 app_config（发布/草稿）与 conversation（调试）&lt;/font&gt;&lt;/b&gt;" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=11;spacing=8;" parent="1" vertex="1">
+                <mxCell id="legend" value="图例：🔑 主键 ｜ 📇 索引外键&lt;br&gt;&lt;b&gt;&lt;font color=&quot;#3535f0&quot;&gt;关系：account 1—N app / conversation / message / api_tool_provider；app 1—N app_config / conversation；conversation 1—N message；app 可选指向 app_config（发布/草稿）与 conversation（调试）；api_tool_provider 1—N api_tool&lt;/font&gt;&lt;/b&gt;" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=11;spacing=8;" parent="1" vertex="1">
                     <mxGeometry x="880" y="440" width="420" height="72" as="geometry"/>
                 </mxCell>
                 <mxCell id="e-acc-app" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.35;entryDx=0;entryDy=0;endArrow=ERmany;startArrow=ERone;startFill=0;" parent="1" source="acc-swim" target="app-swim" edge="1">
@@ -165,6 +165,77 @@
                         <Array as="points">
                             <mxPoint x="980" y="507"/>
                             <mxPoint x="955" y="507"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="atp-swim" value="api_tool_provider（API工具提供者）" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#3535F0;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="800" width="280" height="238" as="geometry"/>
+                </mxCell>
+                <mxCell id="atp-r1" value="🔑 id — uuid NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;fontStyle=1" parent="atp-swim" vertex="1">
+                    <mxGeometry y="28" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="atp-r2" value="📇 account_id — uuid NOT NULL → account" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="atp-swim" vertex="1">
+                    <mxGeometry y="54" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="atp-r3" value="name — varchar(255) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="atp-swim" vertex="1">
+                    <mxGeometry y="80" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="atp-r4" value="icon — varchar(255) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="atp-swim" vertex="1">
+                    <mxGeometry y="106" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="atp-r5" value="description — text NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="atp-swim" vertex="1">
+                    <mxGeometry y="132" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="atp-r6" value="openapi_schema — JSON NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="atp-swim" vertex="1">
+                    <mxGeometry y="158" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="atp-r7" value="updated_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="atp-swim" vertex="1">
+                    <mxGeometry y="184" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="atp-r8" value="created_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="atp-swim" vertex="1">
+                    <mxGeometry y="210" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-swim" value="api_tool（API工具）" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#3535F0;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="800" width="280" height="286" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-r1" value="🔑 id — uuid NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;fontStyle=1" parent="at-swim" vertex="1">
+                    <mxGeometry y="28" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-r2" value="📇 account_id — uuid NOT NULL → account" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="at-swim" vertex="1">
+                    <mxGeometry y="54" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-r3" value="📇 provider_id — uuid NOT NULL → api_tool_provider" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="at-swim" vertex="1">
+                    <mxGeometry y="80" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-r4" value="name — varchar(255) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="at-swim" vertex="1">
+                    <mxGeometry y="106" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-r5" value="description — text NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="at-swim" vertex="1">
+                    <mxGeometry y="132" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-r6" value="url — varchar(255) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="at-swim" vertex="1">
+                    <mxGeometry y="158" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-r7" value="method — varchar(255) NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="at-swim" vertex="1">
+                    <mxGeometry y="184" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-r8" value="parameters — JSON NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="at-swim" vertex="1">
+                    <mxGeometry y="210" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-r9" value="updated_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="at-swim" vertex="1">
+                    <mxGeometry y="236" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="at-r10" value="created_at — timestamp NOT NULL" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontSize=11;" parent="at-swim" vertex="1">
+                    <mxGeometry y="262" width="280" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-atp-at" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.35;entryDx=0;entryDy=0;endArrow=ERmany;startArrow=ERone;startFill=0;" parent="1" source="atp-swim" target="at-swim" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-acc-atp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=ERmany;startArrow=ERone;startFill=0;" parent="1" source="acc-swim" target="atp-swim" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="640" y="760"/>
+                            <mxPoint x="220" y="760"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>

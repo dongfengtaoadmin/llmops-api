@@ -124,7 +124,7 @@ class BuiltinToolService:
             "icon": category["icon"],
         } for category in category_map.values()]
 
-    @classmethod
+    @classmethod #逻辑是纯函数
     def get_tool_inputs(cls, tool) -> list:
         """根据传入的工具获取inputs信息"""
         inputs = []
