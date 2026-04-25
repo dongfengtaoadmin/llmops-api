@@ -41,7 +41,7 @@ class ApiToolHandler:
             return validate_error_json(req.errors)
 
         api_tool_providers, paginator = self.api_tool_service.get_api_tool_providers_with_page(req)
-
+        # many=True 表示批量序列化多个对象。 
         resp = GetApiToolProvidersWithPageResp(many=True)
 
         return success_json(PageModel(list=resp.dump(api_tool_providers), paginator=paginator))

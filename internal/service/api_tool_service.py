@@ -104,7 +104,16 @@ class ApiToolService(BaseService):
             filters.append(ApiToolProvider.name.ilike(f"%{req.search_word.data}%"))
 
         # 3.执行分页并获取数据
+
+        #  这是先 filter，后分页。         
+                                                                                                
+        #   执行流程：                                                                                                                                          
+                                                                                                                                                            
+        #   # 1. 先构建带条件的查询（此时还没执行数据库查询）                                                                                                   
+        #   query = self.db.session.query(ApiToolProvider).filter(*filters).order_by(desc("created_at"))                                                                                                                                                                     
+        #   所以分页是在过滤后的结果集上进行的，不是先分页再过滤。
         api_tool_providers = paginator.paginate(
+             # 1. 先构建带条件的查询（此时还没执行数据库查询）
             self.db.session.query(ApiToolProvider).filter(*filters).order_by(desc("created_at"))
         )
 

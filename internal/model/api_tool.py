@@ -35,6 +35,8 @@ class ApiToolProvider(db.Model):
     )
     created_at = Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP(0)'))
 
+    # 当读取这个只读属性的时候 底层就会调用这段语句
+    # 这段代码的目的是建立模型之间的一对多关系查询。
     @property
     def tools(self) -> list["ApiTool"]:
         return db.session.query(ApiTool).filter_by(provider_id=self.id).all()
