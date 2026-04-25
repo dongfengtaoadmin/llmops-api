@@ -223,8 +223,8 @@ class ApiToolService(BaseService):
         return OpenAPISchema(**data)
 
     def api_tool_invoke(self):
-        provider_id = "d72bb9d7-8794-4caf-bd60-1f992c537065"
-        tool_name = "YoudaoSuggest"
+        provider_id = "0b83c0ed-d8ce-4241-861b-c6dd34fe27c4"
+        tool_name = "GetCurrentWeather"
 
         api_tool = self.db.session.query(ApiTool).filter(
             ApiTool.provider_id == provider_id,
@@ -232,14 +232,16 @@ class ApiToolService(BaseService):
         ).one_or_none()
         api_tool_provider = api_tool.provider
 
-        from internal.core.tools.api_tools.entities import ToolEntity
-        tool = self.api_provider_manager.get_tool(ToolEntity(
-            id=provider_id,
-            name=tool_name,
-            url=api_tool.url,
-            method=api_tool.method,
-            description=api_tool.description,
-            headers=api_tool_provider.headers,
-            parameters=api_tool.parameters,
-        ))
-        return tool.invoke({"q": "love", "doctype": "json"})
+        print(api_tool_provider,'api_tool_providerapi_tool_providerapi_tool_provider11')
+
+        # from internal.core.tools.api_tools.entities import ToolEntity
+        # tool = self.api_provider_manager.get_tool(ToolEntity(
+        #     id=provider_id,
+        #     name=tool_name,
+        #     url=api_tool.url,
+        #     method=api_tool.method,
+        #     description=api_tool.description,
+        #     headers=api_tool_provider.headers,
+        #     parameters=api_tool.parameters,
+        # ))
+        # return tool.invoke({"q": "love", "doctype": "json"})

@@ -22,7 +22,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 
 from internal.schema.app_schema import CompletionReq
-
+from internal.service import ApiToolService
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 from internal.service import AppService, VectorDatabaseService
 from pkg.response import success_json, validate_error_json, success_message
@@ -35,6 +35,7 @@ class AppHandler:
     app_service: AppService
     vector_database_service: VectorDatabaseService
     builtin_provider_manager: BuiltinProviderManager
+    api_tool_service: ApiToolService
 
     def create_app(self):
         """创建应用"""
@@ -111,8 +112,9 @@ class AppHandler:
         return success_json({"content": content})
 
     def ping(self):
-        google_serper = self.builtin_provider_manager.get_tool(provider_name="google", tool_name="google_serper")()
-        print(google_serper)
-        print(google_serper.invoke("2024年北京半程马拉松的前3名成绩是多少？"))
-        return success_json()
+        # google_serper = self.builtin_provider_manager.get_tool(provider_name="google", tool_name="google_serper")()
+        # print(google_serper)
+        # print(google_serper.invoke("2024年北京半程马拉松的前3名成绩是多少？"))
+        return self.api_tool_service.api_tool_invoke()
+        # return success_json()
         # raise FailException("数据未找到") 
