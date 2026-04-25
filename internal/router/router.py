@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from internal.handler import AppHandler, BuiltinToolHandler
+from internal.handler import AppHandler, BuiltinToolHandler, ApiToolHandler
 from flask import Flask, Blueprint
 from injector import inject
 
@@ -10,6 +10,7 @@ class Router:
 
     app_handler:AppHandler
     builtin_tool_handler: BuiltinToolHandler
+    api_tool_handler: ApiToolHandler
 
     def register_routes(self, app: Flask):
         """注册路由"""
@@ -40,6 +41,40 @@ class Router:
         bp.add_url_rule(
             "/builtin-tools/categories",
             view_func=self.builtin_tool_handler.get_categories,
+        )
+
+        # 4.自定义API插件模块
+        bp.add_url_rule(
+            "/api-tools",
+            view_func=self.api_tool_handler.get_api_tool_providers_with_page,
+        )
+        bp.add_url_rule(
+            "/api-tools/validate-openapi-schema",
+            methods=["POST"],
+            view_func=self.api_tool_handler.validate_openapi_schema,
+        )
+        bp.add_url_rule(
+            "/api-tools",
+            methods=["POST"],
+            view_func=self.api_tool_handler.create_api_tool_provider,
+        )
+        bp.add_url_rule(
+            "/api-tools/<uuid:provider_id>",
+            view_func=self.api_tool_handler.get_api_tool_provider,
+        )
+        bp.add_url_rule(
+            "/api-tools/<uuid:provider_id>",
+            methods=["POST"],
+            view_func=self.api_tool_handler.update_api_tool_provider,
+        )
+        bp.add_url_rule(
+            "/api-tools/<uuid:provider_id>/tools/<string:tool_name>",
+            view_func=self.api_tool_handler.get_api_tool,
+        )
+        bp.add_url_rule(
+            "/api-tools/<uuid:provider_id>/delete",
+            methods=["POST"],
+            view_func=self.api_tool_handler.delete_api_tool_provider,
         )
 
         # 在应用上去注册蓝图

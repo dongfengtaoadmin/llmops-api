@@ -1,0 +1,522 @@
+{
+  "info": {
+    "_postman_id": "f2606b35-c855-4252-b847-5e28afe48c5f",
+    "name": "LLMOps-api项目",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "836507",
+    "_collection_link": "https://go.postman.co/collection/836507-f2606b35-c855-4252-b847-5e28afe48c5f?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "健康检查",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/ping",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "ping"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "AI应用模块",
+      "item": [
+        {
+          "name": "基础聊天机器人",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"你叫什么名字？你能帮我做什么？\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/debug",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps",
+                ":app_id",
+                "debug"
+              ],
+              "variable": [
+                {
+                  "key": "app_id",
+                  "value": "{{app_id}}",
+                  "description": "应用ID，UUID格式"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取 app 详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/app/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "app",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{app_id}}",
+                  "description": "应用ID，UUID格式"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "创建机器人",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"智能客服机器人\",\n    \"description\": \"这是一个用于处理客户咨询的智能客服机器人\",\n    \"model\": \"gpt-4o-mini\",\n    \"temperature\": 0.7\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/app",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "app"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新机器人",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"更新的智能客服机器人\",\n    \"description\": \"更新后的描述信息\",\n    \"model\": \"gpt-4o\",\n    \"temperature\": 0.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/app/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "app",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{app_id}}",
+                  "description": "应用ID，UUID格式"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除机器人",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/app/:id/delete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "app",
+                ":id",
+                "delete"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{app_id}}",
+                  "description": "应用ID，UUID格式"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "自定义API工具模块",
+      "item": [
+        {
+          "name": "获取API工具提供商列表（分页）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api-tools?current_page=1&page_size=10&search_word=",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tools"
+              ],
+              "query": [
+                {
+                  "key": "current_page",
+                  "value": "1",
+                  "description": "当前页码，默认为1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "10",
+                  "description": "每页数据条数，范围1-100，默认为20"
+                },
+                {
+                  "key": "search_word",
+                  "value": "",
+                  "description": "搜索关键词，可选"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "验证OpenAPI Schema数据",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"openapi_schema\": \"{\\\"server\\\": \\\"https://api.example.com\\\", \\\"description\\\": \\\"API描述\\\", \\\"paths\\\": {\\\"/location\\\": {\\\"get\\\": {\\\"description\\\": \\\"获取位置信息\\\", \\\"operationId\\\": \\\"getLocation\\\", \\\"parameters\\\": [{\\\"name\\\": \\\"location\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"位置参数\\\", \\\"required\\\": true, \\\"schema\\\": {\\\"type\\\": \\\"string\\\"}}]}}}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tools/validate-openapi-schema",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tools",
+                "validate-openapi-schema"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "创建API工具提供商",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"天气查询API\",\n    \"icon\": \"https://example.com/icons/weather.png\",\n    \"openapi_schema\": \"{\\\"server\\\": \\\"https://api.weather.com/v1\\\", \\\"description\\\": \\\"天气查询API服务\\\", \\\"paths\\\": {\\\"/weather\\\": {\\\"get\\\": {\\\"description\\\": \\\"获取指定城市的天气信息\\\", \\\"operationId\\\": \\\"getWeather\\\", \\\"parameters\\\": [{\\\"name\\\": \\\"city\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"城市名称，如：北京、上海\\\", \\\"required\\\": true, \\\"schema\\\": {\\\"type\\\": \\\"string\\\"}}, {\\\"name\\\": \\\"days\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"预报天数\\\", \\\"required\\\": false, \\\"schema\\\": {\\\"type\\\": \\\"integer\\\", \\\"default\\\": 3}}]}}}}\",\n    \"headers\": [{\"key\": \"Authorization\", \"value\": \"Bearer your-api-key\"}, {\"key\": \"X-Request-Source\", \"value\": \"llmops\"}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tools",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tools"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取API工具提供商详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api-tools/:provider_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tools",
+                ":provider_id"
+              ],
+              "variable": [
+                {
+                  "key": "provider_id",
+                  "value": "{{provider_id}}",
+                  "description": "提供商ID，UUID格式"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新API工具提供商",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"更新的天气查询API\",\n    \"icon\": \"https://example.com/icons/weather-v2.png\",\n    \"openapi_schema\": \"{\\\"server\\\": \\\"https://api.weather.com/v2\\\", \\\"description\\\": \\\"更新的天气查询API服务\\\", \\\"paths\\\": {\\\"/weather\\\": {\\\"get\\\": {\\\"description\\\": \\\"获取指定城市的天气信息\\\", \\\"operationId\\\": \\\"getWeather\\\", \\\"parameters\\\": [{\\\"name\\\": \\\"city\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"城市名称\\\", \\\"required\\\": true, \\\"schema\\\": {\\\"type\\\": \\\"string\\\"}}]}}}}\",\n    \"headers\": [{\"key\": \"Authorization\", \"value\": \"Bearer updated-api-key\"}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tools/:provider_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tools",
+                ":provider_id"
+              ],
+              "variable": [
+                {
+                  "key": "provider_id",
+                  "value": "{{provider_id}}",
+                  "description": "提供商ID，UUID格式"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取API工具详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api-tools/:provider_id/tools/:tool_name",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tools",
+                ":provider_id",
+                "tools",
+                ":tool_name"
+              ],
+              "variable": [
+                {
+                  "key": "provider_id",
+                  "value": "{{provider_id}}",
+                  "description": "提供商ID，UUID格式"
+                },
+                {
+                  "key": "tool_name",
+                  "value": "getWeather",
+                  "description": "工具名称，如：getWeather"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除API工具提供商",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api-tools/:provider_id/delete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-tools",
+                ":provider_id",
+                "delete"
+              ],
+              "variable": [
+                {
+                  "key": "provider_id",
+                  "value": "{{provider_id}}",
+                  "description": "提供商ID，UUID格式"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "内置工具模块",
+      "item": [
+        {
+          "name": "获取所有内置工具信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/builtin-tools",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "builtin-tools"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取单个内置工具信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/builtin-tools/:provider_name/tools/:tool_name",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "builtin-tools",
+                ":provider_name",
+                "tools",
+                ":tool_name"
+              ],
+              "variable": [
+                {
+                  "key": "provider_name",
+                  "value": "gaode",
+                  "description": "提供商名称，如：gaode、google"
+                },
+                {
+                  "key": "tool_name",
+                  "value": "gaode_weather",
+                  "description": "工具名称，如：gaode_weather、google_serper"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取提供商图标",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/builtin-tools/:provider_name/icon",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "builtin-tools",
+                ":provider_name",
+                "icon"
+              ],
+              "variable": [
+                {
+                  "key": "provider_name",
+                  "value": "gaode",
+                  "description": "提供商名称，如：gaode、google"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取内置工具分类信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/builtin-tools/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "builtin-tools",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

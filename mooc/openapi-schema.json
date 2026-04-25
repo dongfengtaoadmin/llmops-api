@@ -1,0 +1,9 @@
+
+
+1:
+
+'{"server":"https://baidu.com","description":"123","paths":{"/location":{"get":{"description":"获取本地位置","operationId":"xxx","parameters":[{"name":"location","in":"query","description":"参数描述","required":true,"type":"str"}]}}}}'
+
+
+
+'{"openapi":"3.0.0","info":{"title":"测试API","version":"1.0.0"},"servers":[{"url":"https://baidu.com"}],"paths":{"/location":{"get":{"description":"获取本地位置","operationId":"xxx","parameters":[{"name":"location","in":"query","description":"参数描述","required":true,"schema":{"type":"string"}}]}}}}'
