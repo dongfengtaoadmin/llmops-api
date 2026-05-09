@@ -11,9 +11,10 @@ import weaviate
 from injector import inject
 from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStoreRetriever
-from langchain_openai import OpenAIEmbeddings
 from langchain_weaviate import WeaviateVectorStore
 from weaviate import WeaviateClient
+
+from .embeddings_service import EmbeddingsService
 
 
 @inject
@@ -21,21 +22,25 @@ class VectorDatabaseService:
     """向量数据库服务"""
     client: WeaviateClient
     vector_store: WeaviateVectorStore
+    embeddings_service: EmbeddingsService
 
-    def __init__(self):
+    def __init__(self, embeddings_services: EmbeddingsService):
         """构造函数，完成向量数据库服务的客户端+LangChain向量数据库实例的创建"""
-        # 1.创建/连接weaviate向量数据库
+        # 1.赋值embeddings_service
+        self.embeddings_service = embeddings_services
+
+        # 2.创建/连接weaviate向量数据库
         self.client = weaviate.connect_to_local(
             host=os.getenv("WEAVIATE_HOST"),
             port=int(os.getenv("WEAVIATE_PORT"))
         )
 
-        # 2.创建LangChain向量数据库
+        # 3.创建LangChain向量数据库
         self.vector_store = WeaviateVectorStore(
             client=self.client,
             index_name="Dataset",
             text_key="text",
-            embedding=OpenAIEmbeddings(model="text-embedding-3-small")
+            embedding=self.embeddings_service.embeddings, # 使用本地的 embeddings 模型
         )
 
     def get_retriever(self) -> VectorStoreRetriever:

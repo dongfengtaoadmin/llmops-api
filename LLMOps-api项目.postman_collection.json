@@ -580,6 +580,182 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "知识库模块",
+      "item": [
+        {
+          "name": "获取知识库列表（分页）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets?current_page=1&page_size=10&search_word=",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "datasets"
+              ],
+              "query": [
+                {
+                  "key": "current_page",
+                  "value": "1",
+                  "description": "当前页码，默认为1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "10",
+                  "description": "每页数据条数，范围1-100，默认为20"
+                },
+                {
+                  "key": "search_word",
+                  "value": "",
+                  "description": "搜索关键词，可选"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "创建知识库",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"产品知识库\",\n    \"icon\": \"https://example.com/icons/knowledge.png\",\n    \"description\": \"这是一个用于存储产品相关知识的知识库，包含产品功能、使用方法、常见问题等内容\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/datasets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "datasets"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取知识库详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "datasets",
+                ":dataset_id"
+              ],
+              "variable": [
+                {
+                  "key": "dataset_id",
+                  "value": "{{dataset_id}}",
+                  "description": "知识库ID，UUID格式"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新知识库",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"更新后的产品知识库\",\n    \"icon\": \"https://example.com/icons/knowledge-v2.png\",\n    \"description\": \"更新后的知识库描述，包含更详细的产品信息和解决方案\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "datasets",
+                ":dataset_id"
+              ],
+              "variable": [
+                {
+                  "key": "dataset_id",
+                  "value": "{{dataset_id}}",
+                  "description": "知识库ID，UUID格式"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "向量查询测试",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets/embeddings",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "datasets",
+                "embeddings"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:9000",
+      "type": "string"
+    },
+    {
+      "key": "app_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "provider_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dataset_id",
+      "value": "",
+      "type": "string"
     }
   ]
 }
