@@ -40,7 +40,8 @@ python start.py --port 8080
 
 
 
-
+--celery
+ celery -A app.http.app.celery worker --loglevel INFO --pool prefork --logfile storage/log/celery.log  
 
 
 

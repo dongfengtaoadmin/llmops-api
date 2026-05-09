@@ -5,20 +5,21 @@
 @Author  : thezehui@gmail.com
 @File    : module.py
 """
-
+from flask_migrate import Migrate
 from injector import Module, Binder
+from redis import Redis
 
 from internal.extension.database_extension import db
-from pkg.sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from internal.extension.migrate_extension import migrate
+from internal.extension.redis_extension import redis_client
+from pkg.sqlalchemy import SQLAlchemy
+
 
 class ExtensionModule(Module):
     """扩展模块的依赖注入"""
 
     def configure(self, binder: Binder) -> None:
-        # 1.绑定SQLAlchemy实例
         binder.bind(SQLAlchemy, to=db)
-        # 2.绑定Migrate实例
         binder.bind(Migrate, to=migrate)
-   
+        # 后续如果要使用 redis_client 只需要 声明一个 Redis 属性就会自行注入了
+        binder.bind(Redis, to=redis_client)

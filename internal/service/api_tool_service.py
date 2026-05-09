@@ -233,15 +233,15 @@ class ApiToolService(BaseService):
         api_tool_provider = api_tool.provider
 
         print(api_tool_provider,'api_tool_providerapi_tool_providerapi_tool_provider11')
-
-        # from internal.core.tools.api_tools.entities import ToolEntity
-        # tool = self.api_provider_manager.get_tool(ToolEntity(
-        #     id=provider_id,
-        #     name=tool_name,
-        #     url=api_tool.url,
-        #     method=api_tool.method,
-        #     description=api_tool.description,
-        #     headers=api_tool_provider.headers,
-        #     parameters=api_tool.parameters,
-        # ))
-        # return tool.invoke({"q": "love", "doctype": "json"})
+    
+        from internal.core.tools.api_tools.entities import ToolEntity
+        tool = self.api_provider_manager.get_tool(ToolEntity(
+            id=provider_id,
+            name=tool_name,
+            url=api_tool.url,
+            method=api_tool.method,
+            description=api_tool.description,
+            headers=api_tool_provider.headers,
+            parameters=api_tool.parameters,
+        ))
+        return tool.invoke({"location": "北京"})

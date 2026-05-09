@@ -27,6 +27,8 @@ app = Http(
     migrate=injector.get(Migrate),
 )
 
+
+celery = app.extensions["celery"]
 if __name__ == "__main__":
     # macOS 上 5000 常被 AirPlay 接收器占用，请求会落到 AirTunes 并返回 403，而非本应用
     _port = int(os.getenv("PORT", "9000"))

@@ -517,6 +517,69 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "文件上传模块",
+      "item": [
+        {
+          "name": "上传文件",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/your/file.pdf",
+                  "description": "要上传的文件，支持多种格式"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload-files/file",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "upload-files",
+                "file"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "上传图片",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/your/image.png",
+                  "description": "要上传的图片文件，支持 png、jpg、jpeg、gif、webp 格式"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload-files/image",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "upload-files",
+                "image"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }

@@ -26,7 +26,7 @@ from internal.service import ApiToolService
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 from internal.service import AppService, VectorDatabaseService
 from pkg.response import success_json, validate_error_json, success_message
-
+from internal.task.demo_task import demo_task
 
 
 @inject
@@ -112,9 +112,5 @@ class AppHandler:
         return success_json({"content": content})
 
     def ping(self):
-        # google_serper = self.builtin_provider_manager.get_tool(provider_name="google", tool_name="google_serper")()
-        # print(google_serper)
-        # print(google_serper.invoke("2024年北京半程马拉松的前3名成绩是多少？"))
-        return self.api_tool_service.api_tool_invoke()
-        # return success_json()
-        # raise FailException("数据未找到") 
+        demo_task.delay(uuid.uuid4())
+        return success_message("异步任务已触发") 
