@@ -8,184 +8,378 @@
   },
   "item": [
     {
-      "name": "健康检查",
+      "name": "1. 健康检查",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
           "raw": "{{base_url}}/ping",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "ping"
-          ]
+          "host": ["{{base_url}}"],
+          "path": ["ping"]
         }
       },
       "response": []
     },
     {
-      "name": "AI应用模块",
+      "name": "2. 应用模块",
       "item": [
         {
-          "name": "基础聊天机器人",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"query\": \"你叫什么名字？你能帮我做什么？\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/apps/:app_id/debug",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "apps",
-                ":app_id",
-                "debug"
-              ],
-              "variable": [
-                {
-                  "key": "app_id",
-                  "value": "{{app_id}}",
-                  "description": "应用ID，UUID格式"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "获取 app 详情",
+          "name": "获取应用列表（分页）",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/app/:id",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "app",
-                ":id"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "{{app_id}}",
-                  "description": "应用ID，UUID格式"
-                }
+              "raw": "{{base_url}}/apps?current_page=1&page_size=10&search_word=",
+              "host": ["{{base_url}}"],
+              "path": ["apps"],
+              "query": [
+                { "key": "current_page", "value": "1", "description": "当前页码，默认为1" },
+                { "key": "page_size", "value": "10", "description": "每页数据条数，范围1-100，默认为20" },
+                { "key": "search_word", "value": "", "description": "搜索关键词，可选" }
               ]
             }
           },
           "response": []
         },
         {
-          "name": "创建机器人",
+          "name": "创建应用",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"智能客服机器人\",\n    \"description\": \"这是一个用于处理客户咨询的智能客服机器人\",\n    \"model\": \"gpt-4o-mini\",\n    \"temperature\": 0.7\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{base_url}}/app",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "app"
+              "raw": "{{base_url}}/apps",
+              "host": ["{{base_url}}"],
+              "path": ["apps"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取应用详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
               ]
             }
           },
           "response": []
         },
         {
-          "name": "更新机器人",
+          "name": "更新应用",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"更新的智能客服机器人\",\n    \"description\": \"更新后的描述信息\",\n    \"model\": \"gpt-4o\",\n    \"temperature\": 0.5\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{base_url}}/app/:id",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "app",
-                ":id"
-              ],
+              "raw": "{{base_url}}/apps/:app_id",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id"],
               "variable": [
-                {
-                  "key": "id",
-                  "value": "{{app_id}}",
-                  "description": "应用ID，UUID格式"
-                }
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
               ]
             }
           },
           "response": []
         },
         {
-          "name": "删除机器人",
+          "name": "删除应用",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/app/:id/delete",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "app",
-                ":id",
-                "delete"
-              ],
+              "raw": "{{base_url}}/apps/:app_id/delete",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "delete"],
               "variable": [
-                {
-                  "key": "id",
-                  "value": "{{app_id}}",
-                  "description": "应用ID，UUID格式"
-                }
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "复制应用",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/copy",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "copy"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取草稿配置",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/draft-app-config",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "draft-app-config"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新草稿配置",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"opening_statement\": \"你好，我是智能助手，有什么可以帮助你的吗？\",\n    \"suggested_questions\": [\"你能做什么？\", \"如何使用你？\", \"你有什么功能？\"],\n    \"model\": {\n        \"provider\": \"openai\",\n        \"model\": \"gpt-4o-mini\",\n        \"temperature\": 0.7\n    }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/draft-app-config",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "draft-app-config"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "发布应用",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/publish",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "publish"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "取消发布",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/cancel-publish",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "cancel-publish"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取发布历史列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/publish-histories?current_page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "publish-histories"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "回退历史版本",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"history_id\": \"{{history_id}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/fallback-history",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "fallback-history"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取调试会话摘要",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/summary",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "summary"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新调试会话摘要",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"summary\": \"这是一个关于产品咨询的对话\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/summary",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "summary"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除调试会话",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/conversations/delete-debug-conversation",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "conversations", "delete-debug-conversation"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "调试聊天",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"你叫什么名字？你能帮我做什么？\",\n    \"inputs\": {},\n    \"conversation_id\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/conversations",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "conversations"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "停止调试聊天",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/conversations/tasks/:task_id/stop",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "conversations", "tasks", ":task_id", "stop"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" },
+                { "key": "task_id", "value": "{{task_id}}", "description": "任务ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取调试会话消息列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/conversations/messages?current_page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "conversations", "messages"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取已发布配置",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/published-config",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "published-config"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "重新生成WebApp令牌",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/:app_id/published-config/regenerate-web-app-token",
+              "host": ["{{base_url}}"],
+              "path": ["apps", ":app_id", "published-config", "regenerate-web-app-token"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
               ]
             }
           },
@@ -194,234 +388,7 @@
       ]
     },
     {
-      "name": "自定义API工具模块",
-      "item": [
-        {
-          "name": "获取API工具提供商列表（分页）",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api-tools?current_page=1&page_size=10&search_word=",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api-tools"
-              ],
-              "query": [
-                {
-                  "key": "current_page",
-                  "value": "1",
-                  "description": "当前页码，默认为1"
-                },
-                {
-                  "key": "page_size",
-                  "value": "10",
-                  "description": "每页数据条数，范围1-100，默认为20"
-                },
-                {
-                  "key": "search_word",
-                  "value": "",
-                  "description": "搜索关键词，可选"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "验证OpenAPI Schema数据",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"openapi_schema\": \"{\\\"server\\\": \\\"https://api.example.com\\\", \\\"description\\\": \\\"API描述\\\", \\\"paths\\\": {\\\"/location\\\": {\\\"get\\\": {\\\"description\\\": \\\"获取位置信息\\\", \\\"operationId\\\": \\\"getLocation\\\", \\\"parameters\\\": [{\\\"name\\\": \\\"location\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"位置参数\\\", \\\"required\\\": true, \\\"schema\\\": {\\\"type\\\": \\\"string\\\"}}]}}}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/api-tools/validate-openapi-schema",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api-tools",
-                "validate-openapi-schema"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "创建API工具提供商",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"天气查询API\",\n    \"icon\": \"https://example.com/icons/weather.png\",\n    \"openapi_schema\": \"{\\\"server\\\": \\\"https://api.weather.com/v1\\\", \\\"description\\\": \\\"天气查询API服务\\\", \\\"paths\\\": {\\\"/weather\\\": {\\\"get\\\": {\\\"description\\\": \\\"获取指定城市的天气信息\\\", \\\"operationId\\\": \\\"getWeather\\\", \\\"parameters\\\": [{\\\"name\\\": \\\"city\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"城市名称，如：北京、上海\\\", \\\"required\\\": true, \\\"schema\\\": {\\\"type\\\": \\\"string\\\"}}, {\\\"name\\\": \\\"days\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"预报天数\\\", \\\"required\\\": false, \\\"schema\\\": {\\\"type\\\": \\\"integer\\\", \\\"default\\\": 3}}]}}}}\",\n    \"headers\": [{\"key\": \"Authorization\", \"value\": \"Bearer your-api-key\"}, {\"key\": \"X-Request-Source\", \"value\": \"llmops\"}]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/api-tools",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api-tools"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "获取API工具提供商详情",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api-tools/:provider_id",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api-tools",
-                ":provider_id"
-              ],
-              "variable": [
-                {
-                  "key": "provider_id",
-                  "value": "{{provider_id}}",
-                  "description": "提供商ID，UUID格式"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "更新API工具提供商",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"更新的天气查询API\",\n    \"icon\": \"https://example.com/icons/weather-v2.png\",\n    \"openapi_schema\": \"{\\\"server\\\": \\\"https://api.weather.com/v2\\\", \\\"description\\\": \\\"更新的天气查询API服务\\\", \\\"paths\\\": {\\\"/weather\\\": {\\\"get\\\": {\\\"description\\\": \\\"获取指定城市的天气信息\\\", \\\"operationId\\\": \\\"getWeather\\\", \\\"parameters\\\": [{\\\"name\\\": \\\"city\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"城市名称\\\", \\\"required\\\": true, \\\"schema\\\": {\\\"type\\\": \\\"string\\\"}}]}}}}\",\n    \"headers\": [{\"key\": \"Authorization\", \"value\": \"Bearer updated-api-key\"}]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/api-tools/:provider_id",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api-tools",
-                ":provider_id"
-              ],
-              "variable": [
-                {
-                  "key": "provider_id",
-                  "value": "{{provider_id}}",
-                  "description": "提供商ID，UUID格式"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "获取API工具详情",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api-tools/:provider_id/tools/:tool_name",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api-tools",
-                ":provider_id",
-                "tools",
-                ":tool_name"
-              ],
-              "variable": [
-                {
-                  "key": "provider_id",
-                  "value": "{{provider_id}}",
-                  "description": "提供商ID，UUID格式"
-                },
-                {
-                  "key": "tool_name",
-                  "value": "getWeather",
-                  "description": "工具名称，如：getWeather"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "删除API工具提供商",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api-tools/:provider_id/delete",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api-tools",
-                ":provider_id",
-                "delete"
-              ],
-              "variable": [
-                {
-                  "key": "provider_id",
-                  "value": "{{provider_id}}",
-                  "description": "提供商ID，UUID格式"
-                }
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "内置工具模块",
+      "name": "3. 内置工具模块",
       "item": [
         {
           "name": "获取所有内置工具信息",
@@ -430,12 +397,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/builtin-tools",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "builtin-tools"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["builtin-tools"]
             }
           },
           "response": []
@@ -447,26 +410,11 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/builtin-tools/:provider_name/tools/:tool_name",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "builtin-tools",
-                ":provider_name",
-                "tools",
-                ":tool_name"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["builtin-tools", ":provider_name", "tools", ":tool_name"],
               "variable": [
-                {
-                  "key": "provider_name",
-                  "value": "gaode",
-                  "description": "提供商名称，如：gaode、google"
-                },
-                {
-                  "key": "tool_name",
-                  "value": "gaode_weather",
-                  "description": "工具名称，如：gaode_weather、google_serper"
-                }
+                { "key": "provider_name", "value": "gaode", "description": "提供商名称，如：gaode、google" },
+                { "key": "tool_name", "value": "gaode_weather", "description": "工具名称，如：gaode_weather" }
               ]
             }
           },
@@ -479,20 +427,10 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/builtin-tools/:provider_name/icon",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "builtin-tools",
-                ":provider_name",
-                "icon"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["builtin-tools", ":provider_name", "icon"],
               "variable": [
-                {
-                  "key": "provider_name",
-                  "value": "gaode",
-                  "description": "提供商名称，如：gaode、google"
-                }
+                { "key": "provider_name", "value": "gaode", "description": "提供商名称，如：gaode、google" }
               ]
             }
           },
@@ -505,12 +443,142 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/builtin-tools/categories",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "builtin-tools",
-                "categories"
+              "host": ["{{base_url}}"],
+              "path": ["builtin-tools", "categories"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. 自定义API工具模块",
+      "item": [
+        {
+          "name": "获取API工具提供商列表（分页）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api-tools?current_page=1&page_size=10&search_word=",
+              "host": ["{{base_url}}"],
+              "path": ["api-tools"],
+              "query": [
+                { "key": "current_page", "value": "1", "description": "当前页码，默认为1" },
+                { "key": "page_size", "value": "10", "description": "每页数据条数，范围1-100，默认为20" },
+                { "key": "search_word", "value": "", "description": "搜索关键词，可选" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "验证OpenAPI Schema数据",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"openapi_schema\": \"{\\\"server\\\": \\\"https://api.example.com\\\", \\\"description\\\": \\\"API描述\\\", \\\"paths\\\": {\\\"/location\\\": {\\\"get\\\": {\\\"description\\\": \\\"获取位置信息\\\", \\\"operationId\\\": \\\"getLocation\\\", \\\"parameters\\\": [{\\\"name\\\": \\\"location\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"位置参数\\\", \\\"required\\\": true, \\\"schema\\\": {\\\"type\\\": \\\"string\\\"}}]}}}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tools/validate-openapi-schema",
+              "host": ["{{base_url}}"],
+              "path": ["api-tools", "validate-openapi-schema"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "创建API工具提供商",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"天气查询API\",\n    \"icon\": \"https://example.com/icons/weather.png\",\n    \"openapi_schema\": \"{\\\"server\\\": \\\"https://api.weather.com/v1\\\", \\\"description\\\": \\\"天气查询API服务\\\", \\\"paths\\\": {\\\"/weather\\\": {\\\"get\\\": {\\\"description\\\": \\\"获取指定城市的天气信息\\\", \\\"operationId\\\": \\\"getWeather\\\", \\\"parameters\\\": [{\\\"name\\\": \\\"city\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"城市名称\\\", \\\"required\\\": true, \\\"schema\\\": {\\\"type\\\": \\\"string\\\"}}]}}}}\",\n    \"headers\": [{\"key\": \"Authorization\", \"value\": \"Bearer your-api-key\"}]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tools",
+              "host": ["{{base_url}}"],
+              "path": ["api-tools"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取API工具提供商详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api-tools/:provider_id",
+              "host": ["{{base_url}}"],
+              "path": ["api-tools", ":provider_id"],
+              "variable": [
+                { "key": "provider_id", "value": "{{provider_id}}", "description": "提供商ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新API工具提供商",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"更新的天气查询API\",\n    \"icon\": \"https://example.com/icons/weather-v2.png\",\n    \"openapi_schema\": \"{\\\"server\\\": \\\"https://api.weather.com/v2\\\", \\\"description\\\": \\\"更新的天气查询API服务\\\", \\\"paths\\\": {\\\"/weather\\\": {\\\"get\\\": {\\\"description\\\": \\\"获取指定城市的天气信息\\\", \\\"operationId\\\": \\\"getWeather\\\", \\\"parameters\\\": [{\\\"name\\\": \\\"city\\\", \\\"in\\\": \\\"query\\\", \\\"description\\\": \\\"城市名称\\\", \\\"required\\\": true, \\\"schema\\\": {\\\"type\\\": \\\"string\\\"}}]}}}}\",\n    \"headers\": [{\"key\": \"Authorization\", \"value\": \"Bearer updated-api-key\"}]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api-tools/:provider_id",
+              "host": ["{{base_url}}"],
+              "path": ["api-tools", ":provider_id"],
+              "variable": [
+                { "key": "provider_id", "value": "{{provider_id}}", "description": "提供商ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取API工具详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api-tools/:provider_id/tools/:tool_name",
+              "host": ["{{base_url}}"],
+              "path": ["api-tools", ":provider_id", "tools", ":tool_name"],
+              "variable": [
+                { "key": "provider_id", "value": "{{provider_id}}", "description": "提供商ID，UUID格式" },
+                { "key": "tool_name", "value": "getWeather", "description": "工具名称" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除API工具提供商",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api-tools/:provider_id/delete",
+              "host": ["{{base_url}}"],
+              "path": ["api-tools", ":provider_id", "delete"],
+              "variable": [
+                { "key": "provider_id", "value": "{{provider_id}}", "description": "提供商ID，UUID格式" }
               ]
             }
           },
@@ -519,7 +587,7 @@
       ]
     },
     {
-      "name": "文件上传模块",
+      "name": "5. 文件上传模块",
       "item": [
         {
           "name": "上传文件",
@@ -539,13 +607,8 @@
             },
             "url": {
               "raw": "{{base_url}}/upload-files/file",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "upload-files",
-                "file"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["upload-files", "file"]
             }
           },
           "response": []
@@ -568,13 +631,8 @@
             },
             "url": {
               "raw": "{{base_url}}/upload-files/image",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "upload-files",
-                "image"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["upload-files", "image"]
             }
           },
           "response": []
@@ -582,7 +640,7 @@
       ]
     },
     {
-      "name": "知识库模块",
+      "name": "6. 知识库模块",
       "item": [
         {
           "name": "获取知识库列表（分页）",
@@ -591,28 +649,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/datasets?current_page=1&page_size=10&search_word=",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "datasets"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["datasets"],
               "query": [
-                {
-                  "key": "current_page",
-                  "value": "1",
-                  "description": "当前页码，默认为1"
-                },
-                {
-                  "key": "page_size",
-                  "value": "10",
-                  "description": "每页数据条数，范围1-100，默认为20"
-                },
-                {
-                  "key": "search_word",
-                  "value": "",
-                  "description": "搜索关键词，可选"
-                }
+                { "key": "current_page", "value": "1", "description": "当前页码，默认为1" },
+                { "key": "page_size", "value": "10", "description": "每页数据条数，范围1-100，默认为20" },
+                { "key": "search_word", "value": "", "description": "搜索关键词，可选" }
               ]
             }
           },
@@ -623,29 +665,17 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"产品知识库\",\n    \"icon\": \"https://example.com/icons/knowledge.png\",\n    \"description\": \"这是一个用于存储产品相关知识的知识库，包含产品功能、使用方法、常见问题等内容\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"name\": \"产品知识库\",\n    \"icon\": \"https://example.com/icons/knowledge.png\",\n    \"description\": \"这是一个用于存储产品相关知识的知识库\"\n}",
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/datasets",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "datasets"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["datasets"]
             }
           },
           "response": []
@@ -657,19 +687,10 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/datasets/:dataset_id",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "datasets",
-                ":dataset_id"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id"],
               "variable": [
-                {
-                  "key": "dataset_id",
-                  "value": "{{dataset_id}}",
-                  "description": "知识库ID，UUID格式"
-                }
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" }
               ]
             }
           },
@@ -680,54 +701,1249 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"更新后的产品知识库\",\n    \"icon\": \"https://example.com/icons/knowledge-v2.png\",\n    \"description\": \"更新后的知识库描述，包含更详细的产品信息和解决方案\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"name\": \"更新后的产品知识库\",\n    \"icon\": \"https://example.com/icons/knowledge-v2.png\",\n    \"description\": \"更新后的知识库描述\"\n}",
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{base_url}}/datasets/:dataset_id",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "datasets",
-                ":dataset_id"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id"],
               "variable": [
-                {
-                  "key": "dataset_id",
-                  "value": "{{dataset_id}}",
-                  "description": "知识库ID，UUID格式"
-                }
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" }
               ]
             }
           },
           "response": []
         },
         {
-          "name": "向量查询测试",
+          "name": "获取知识库查询记录",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/datasets/embeddings",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "datasets",
-                "embeddings"
+              "raw": "{{base_url}}/datasets/:dataset_id/queries?current_page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "queries"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除知识库",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/delete",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "delete"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "知识库命中测试",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"产品功能介绍\",\n    \"top_k\": 5\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/hit",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "hit"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. 文档模块",
+      "item": [
+        {
+          "name": "获取文档列表（分页）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents?current_page=1&page_size=10&search_word=",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "创建文档",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"upload_file_ids\": [\"{{file_id_1}}\", \"{{file_id_2}}\"],\n    \"process_type\": \"automatic\",\n    \"rule\": {}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取文档详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/:document_id",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", ":document_id"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "document_id", "value": "{{document_id}}", "description": "文档ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新文档名称",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"更新后的文档名称.pdf\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/:document_id/name",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", ":document_id", "name"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "document_id", "value": "{{document_id}}", "description": "文档ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新文档启用状态",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"enabled\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/:document_id/enabled",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", ":document_id", "enabled"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "document_id", "value": "{{document_id}}", "description": "文档ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除文档",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/:document_id/delete",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", ":document_id", "delete"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "document_id", "value": "{{document_id}}", "description": "文档ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取批量文档状态",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/batch/:batch",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", "batch", ":batch"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "batch", "value": "{{batch}}", "description": "批次ID" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. 段落模块",
+      "item": [
+        {
+          "name": "获取段落列表（分页）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/:document_id/segments?current_page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", ":document_id", "segments"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "document_id", "value": "{{document_id}}", "description": "文档ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "创建段落",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"这是一个新的段落内容\",\n    \"keywords\": [\"关键词1\", \"关键词2\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/:document_id/segments",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", ":document_id", "segments"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "document_id", "value": "{{document_id}}", "description": "文档ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取段落详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/:document_id/segments/:segment_id",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", ":document_id", "segments", ":segment_id"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "document_id", "value": "{{document_id}}", "description": "文档ID，UUID格式" },
+                { "key": "segment_id", "value": "{{segment_id}}", "description": "段落ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新段落",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"更新后的段落内容\",\n    \"keywords\": [\"新关键词1\", \"新关键词2\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/:document_id/segments/:segment_id",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", ":document_id", "segments", ":segment_id"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "document_id", "value": "{{document_id}}", "description": "文档ID，UUID格式" },
+                { "key": "segment_id", "value": "{{segment_id}}", "description": "段落ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新段落启用状态",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"enabled\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/:document_id/segments/:segment_id/enabled",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", ":document_id", "segments", ":segment_id", "enabled"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "document_id", "value": "{{document_id}}", "description": "文档ID，UUID格式" },
+                { "key": "segment_id", "value": "{{segment_id}}", "description": "段落ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除段落",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/datasets/:dataset_id/documents/:document_id/segments/:segment_id/delete",
+              "host": ["{{base_url}}"],
+              "path": ["datasets", ":dataset_id", "documents", ":document_id", "segments", ":segment_id", "delete"],
+              "variable": [
+                { "key": "dataset_id", "value": "{{dataset_id}}", "description": "知识库ID，UUID格式" },
+                { "key": "document_id", "value": "{{document_id}}", "description": "文档ID，UUID格式" },
+                { "key": "segment_id", "value": "{{segment_id}}", "description": "段落ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9. 授权认证模块",
+      "item": [
+        {
+          "name": "OAuth提供商跳转",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/oauth/:provider_name",
+              "host": ["{{base_url}}"],
+              "path": ["oauth", ":provider_name"],
+              "variable": [
+                { "key": "provider_name", "value": "google", "description": "提供商名称，如：google、github" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "OAuth授权回调",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"authorization_code_here\",\n    \"state\": \"state_parameter\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/oauth/authorize/:provider_name",
+              "host": ["{{base_url}}"],
+              "path": ["oauth", "authorize", ":provider_name"],
+              "variable": [
+                { "key": "provider_name", "value": "google", "description": "提供商名称，如：google、github" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "密码登录",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"your_password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/password-login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "password-login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "登出",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10. 账号设置模块",
+      "item": [
+        {
+          "name": "获取当前用户信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/account",
+              "host": ["{{base_url}}"],
+              "path": ["account"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "修改密码",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"old_password\": \"old_password\",\n    \"new_password\": \"new_password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/account/password",
+              "host": ["{{base_url}}"],
+              "path": ["account", "password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "修改用户名",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"新用户名\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/account/name",
+              "host": ["{{base_url}}"],
+              "path": ["account", "name"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "修改头像",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"avatar\": \"https://example.com/avatar.png\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/account/avatar",
+              "host": ["{{base_url}}"],
+              "path": ["account", "avatar"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. AI辅助模块",
+      "item": [
+        {
+          "name": "优化提示词",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"prompt\": \"帮我写一个产品介绍\",\n    \"language\": \"zh-CN\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/ai/optimize-prompt",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "optimize-prompt"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "生成建议问题",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"产品功能介绍\",\n    \"num_questions\": 3\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/ai/suggested-questions",
+              "host": ["{{base_url}}"],
+              "path": ["ai", "suggested-questions"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12. API秘钥模块",
+      "item": [
+        {
+          "name": "获取API秘钥列表（分页）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/openapi/api-keys?current_page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["openapi", "api-keys"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "创建API秘钥",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"生产环境API秘钥\",\n    \"app_id\": \"{{app_id}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/openapi/api-keys",
+              "host": ["{{base_url}}"],
+              "path": ["openapi", "api-keys"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新API秘钥",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"更新后的API秘钥名称\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/openapi/api-keys/:api_key_id",
+              "host": ["{{base_url}}"],
+              "path": ["openapi", "api-keys", ":api_key_id"],
+              "variable": [
+                { "key": "api_key_id", "value": "{{api_key_id}}", "description": "API秘钥ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新API秘钥启用状态",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"is_active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/openapi/api-keys/:api_key_id/is-active",
+              "host": ["{{base_url}}"],
+              "path": ["openapi", "api-keys", ":api_key_id", "is-active"],
+              "variable": [
+                { "key": "api_key_id", "value": "{{api_key_id}}", "description": "API秘钥ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除API秘钥",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/openapi/api-keys/:api_key_id/delete",
+              "host": ["{{base_url}}"],
+              "path": ["openapi", "api-keys", ":api_key_id", "delete"],
+              "variable": [
+                { "key": "api_key_id", "value": "{{api_key_id}}", "description": "API秘钥ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "OpenAPI聊天",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" },
+              { "key": "Authorization", "value": "Bearer {{api_key}}", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"你好，请介绍一下你自己\",\n    \"conversation_id\": \"\",\n    \"stream\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/openapi/chat",
+              "host": ["{{base_url}}"],
+              "path": ["openapi", "chat"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "13. 内置应用模块",
+      "item": [
+        {
+          "name": "获取内置应用分类",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/builtin-apps/categories",
+              "host": ["{{base_url}}"],
+              "path": ["builtin-apps", "categories"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取内置应用列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/builtin-apps?category=&search_word=",
+              "host": ["{{base_url}}"],
+              "path": ["builtin-apps"],
+              "query": [
+                { "key": "category", "value": "", "description": "分类ID，可选" },
+                { "key": "search_word", "value": "", "description": "搜索关键词，可选" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "添加内置应用到空间",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"builtin_app_id\": \"{{builtin_app_id}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/builtin-apps/add-builtin-app-to-space",
+              "host": ["{{base_url}}"],
+              "path": ["builtin-apps", "add-builtin-app-to-space"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "14. 工作流模块",
+      "item": [
+        {
+          "name": "获取工作流列表（分页）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workflows?current_page=1&page_size=10&search_word=",
+              "host": ["{{base_url}}"],
+              "path": ["workflows"],
+              "query": [
+                { "key": "current_page", "value": "1", "description": "当前页码" },
+                { "key": "page_size", "value": "10", "description": "每页数据条数" },
+                { "key": "search_word", "value": "", "description": "搜索关键词" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "创建工作流",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"智能问答工作流\",\n    \"description\": \"这是一个智能问答工作流\",\n    \"graph\": {\n        \"nodes\": [],\n        \"edges\": []\n    }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/workflows",
+              "host": ["{{base_url}}"],
+              "path": ["workflows"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取工作流详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workflows/:workflow_id",
+              "host": ["{{base_url}}"],
+              "path": ["workflows", ":workflow_id"],
+              "variable": [
+                { "key": "workflow_id", "value": "{{workflow_id}}", "description": "工作流ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新工作流",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"更新的工作流名称\",\n    \"description\": \"更新的描述\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/workflows/:workflow_id",
+              "host": ["{{base_url}}"],
+              "path": ["workflows", ":workflow_id"],
+              "variable": [
+                { "key": "workflow_id", "value": "{{workflow_id}}", "description": "工作流ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除工作流",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workflows/:workflow_id/delete",
+              "host": ["{{base_url}}"],
+              "path": ["workflows", ":workflow_id", "delete"],
+              "variable": [
+                { "key": "workflow_id", "value": "{{workflow_id}}", "description": "工作流ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新草稿图",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"graph\": {\n        \"nodes\": [\n            {\"id\": \"start\", \"type\": \"start\", \"data\": {}},\n            {\"id\": \"end\", \"type\": \"end\", \"data\": {}}\n        ],\n        \"edges\": [\n            {\"source\": \"start\", \"target\": \"end\"}\n        ]\n    }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/workflows/:workflow_id/draft-graph",
+              "host": ["{{base_url}}"],
+              "path": ["workflows", ":workflow_id", "draft-graph"],
+              "variable": [
+                { "key": "workflow_id", "value": "{{workflow_id}}", "description": "工作流ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取草稿图",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workflows/:workflow_id/draft-graph",
+              "host": ["{{base_url}}"],
+              "path": ["workflows", ":workflow_id", "draft-graph"],
+              "variable": [
+                { "key": "workflow_id", "value": "{{workflow_id}}", "description": "工作流ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "调试工作流",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"inputs\": {\n        \"query\": \"测试输入\"\n    }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/workflows/:workflow_id/debug",
+              "host": ["{{base_url}}"],
+              "path": ["workflows", ":workflow_id", "debug"],
+              "variable": [
+                { "key": "workflow_id", "value": "{{workflow_id}}", "description": "工作流ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "发布工作流",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workflows/:workflow_id/publish",
+              "host": ["{{base_url}}"],
+              "path": ["workflows", ":workflow_id", "publish"],
+              "variable": [
+                { "key": "workflow_id", "value": "{{workflow_id}}", "description": "工作流ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "取消发布工作流",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workflows/:workflow_id/cancel-publish",
+              "host": ["{{base_url}}"],
+              "path": ["workflows", ":workflow_id", "cancel-publish"],
+              "variable": [
+                { "key": "workflow_id", "value": "{{workflow_id}}", "description": "工作流ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "15. 语言模型模块",
+      "item": [
+        {
+          "name": "获取语言模型列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/language-models",
+              "host": ["{{base_url}}"],
+              "path": ["language-models"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取语言模型提供商图标",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/language-models/:provider_name/icon",
+              "host": ["{{base_url}}"],
+              "path": ["language-models", ":provider_name", "icon"],
+              "variable": [
+                { "key": "provider_name", "value": "openai", "description": "提供商名称，如：openai、anthropic" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取语言模型详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/language-models/:provider_name/:model_name",
+              "host": ["{{base_url}}"],
+              "path": ["language-models", ":provider_name", ":model_name"],
+              "variable": [
+                { "key": "provider_name", "value": "openai", "description": "提供商名称" },
+                { "key": "model_name", "value": "gpt-4o-mini", "description": "模型名称" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "16. 辅助Agent模块",
+      "item": [
+        {
+          "name": "Agent聊天",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"请帮我分析一下这个问题\",\n    \"conversation_id\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/assistant-agent/chat",
+              "host": ["{{base_url}}"],
+              "path": ["assistant-agent", "chat"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "停止Agent聊天",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assistant-agent/chat/:task_id/stop",
+              "host": ["{{base_url}}"],
+              "path": ["assistant-agent", "chat", ":task_id", "stop"],
+              "variable": [
+                { "key": "task_id", "value": "{{task_id}}", "description": "任务ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取Agent消息列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assistant-agent/messages?current_page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["assistant-agent", "messages"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除Agent会话",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assistant-agent/delete-conversation",
+              "host": ["{{base_url}}"],
+              "path": ["assistant-agent", "delete-conversation"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "17. 应用统计模块",
+      "item": [
+        {
+          "name": "获取应用统计数据",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/analysis/:app_id",
+              "host": ["{{base_url}}"],
+              "path": ["analysis", ":app_id"],
+              "variable": [
+                { "key": "app_id", "value": "{{app_id}}", "description": "应用ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "18. WebApp模块",
+      "item": [
+        {
+          "name": "获取WebApp信息",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/web-apps/:token",
+              "host": ["{{base_url}}"],
+              "path": ["web-apps", ":token"],
+              "variable": [
+                { "key": "token", "value": "{{web_app_token}}", "description": "WebApp令牌" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "WebApp聊天",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"你好，请介绍一下你自己\",\n    \"conversation_id\": \"\",\n    \"stream\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/web-apps/:token/chat",
+              "host": ["{{base_url}}"],
+              "path": ["web-apps", ":token", "chat"],
+              "variable": [
+                { "key": "token", "value": "{{web_app_token}}", "description": "WebApp令牌" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "停止WebApp聊天",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/web-apps/:token/chat/:task_id/stop",
+              "host": ["{{base_url}}"],
+              "path": ["web-apps", ":token", "chat", ":task_id", "stop"],
+              "variable": [
+                { "key": "token", "value": "{{web_app_token}}", "description": "WebApp令牌" },
+                { "key": "task_id", "value": "{{task_id}}", "description": "任务ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取WebApp会话列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/web-apps/:token/conversations?current_page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["web-apps", ":token", "conversations"],
+              "variable": [
+                { "key": "token", "value": "{{web_app_token}}", "description": "WebApp令牌" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "19. 会话模块",
+      "item": [
+        {
+          "name": "获取会话消息列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/conversations/:conversation_id/messages?current_page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["conversations", ":conversation_id", "messages"],
+              "variable": [
+                { "key": "conversation_id", "value": "{{conversation_id}}", "description": "会话ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除会话",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/conversations/:conversation_id/delete",
+              "host": ["{{base_url}}"],
+              "path": ["conversations", ":conversation_id", "delete"],
+              "variable": [
+                { "key": "conversation_id", "value": "{{conversation_id}}", "description": "会话ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "删除会话中的消息",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/conversations/:conversation_id/messages/:message_id/delete",
+              "host": ["{{base_url}}"],
+              "path": ["conversations", ":conversation_id", "messages", ":message_id", "delete"],
+              "variable": [
+                { "key": "conversation_id", "value": "{{conversation_id}}", "description": "会话ID，UUID格式" },
+                { "key": "message_id", "value": "{{message_id}}", "description": "消息ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "获取会话名称",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/conversations/:conversation_id/name",
+              "host": ["{{base_url}}"],
+              "path": ["conversations", ":conversation_id", "name"],
+              "variable": [
+                { "key": "conversation_id", "value": "{{conversation_id}}", "description": "会话ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新会话名称",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"新的会话名称\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/conversations/:conversation_id/name",
+              "host": ["{{base_url}}"],
+              "path": ["conversations", ":conversation_id", "name"],
+              "variable": [
+                { "key": "conversation_id", "value": "{{conversation_id}}", "description": "会话ID，UUID格式" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "更新会话置顶状态",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"is_pinned\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/conversations/:conversation_id/is-pinned",
+              "host": ["{{base_url}}"],
+              "path": ["conversations", ":conversation_id", "is-pinned"],
+              "variable": [
+                { "key": "conversation_id", "value": "{{conversation_id}}", "description": "会话ID，UUID格式" }
               ]
             }
           },
@@ -737,25 +1953,21 @@
     }
   ],
   "variable": [
-    {
-      "key": "base_url",
-      "value": "http://127.0.0.1:9000",
-      "type": "string"
-    },
-    {
-      "key": "app_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "provider_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "dataset_id",
-      "value": "",
-      "type": "string"
-    }
+    { "key": "base_url", "value": "http://127.0.0.1:9000", "type": "string" },
+    { "key": "app_id", "value": "", "type": "string" },
+    { "key": "provider_id", "value": "", "type": "string" },
+    { "key": "dataset_id", "value": "", "type": "string" },
+    { "key": "document_id", "value": "", "type": "string" },
+    { "key": "segment_id", "value": "", "type": "string" },
+    { "key": "workflow_id", "value": "", "type": "string" },
+    { "key": "conversation_id", "value": "", "type": "string" },
+    { "key": "task_id", "value": "", "type": "string" },
+    { "key": "message_id", "value": "", "type": "string" },
+    { "key": "api_key_id", "value": "", "type": "string" },
+    { "key": "api_key", "value": "", "type": "string" },
+    { "key": "web_app_token", "value": "", "type": "string" },
+    { "key": "history_id", "value": "", "type": "string" },
+    { "key": "batch", "value": "", "type": "string" },
+    { "key": "builtin_app_id", "value": "", "type": "string" }
   ]
 }
