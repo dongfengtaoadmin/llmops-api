@@ -38,7 +38,7 @@ class DocumentHandler:
         if not req.validate():
             return validate_error_json(req.errors)
 
-        print("req.data数据:", sep='\n', *req.data)
+     
         # 2.调用服务并创建文档，返回文档列表信息+处理批次
         documents, batch = self.document_service.create_documents(dataset_id, **req.data)
 

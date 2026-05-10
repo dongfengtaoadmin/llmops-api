@@ -15,6 +15,17 @@ from langchain_text_splitters import TextSplitter, RecursiveCharacterTextSplitte
 from internal.model import ProcessRule
 
 
+    #   "rule": {                                                                             
+    #       "pre_process_rules": [                                                            
+    #           {"id": "remove_extra_space", "enabled": true},                                
+    #           {"id": "remove_url_and_email", "enabled": false}                              
+    #       ],                                                                                
+    #       "segment": {                                                                      
+    #           "separators": ["\n", "。", "！", "?"],                                        
+    #           "chunk_size": 500,                                                            
+    #           "chunk_overlap": 100                                                          
+    #       }                                                                                 
+    #   }  
 @inject
 @dataclass
 class ProcessRuleService:

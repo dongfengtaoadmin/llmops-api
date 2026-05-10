@@ -22,7 +22,7 @@ from .schema import ListField, DictField
 class CreateDocumentsReq(FlaskForm):
     """创建/新增文档列表请求"""
     upload_file_ids = ListField("upload_file_ids")
-  
+
     process_type = StringField("process_type", validators=[
         DataRequired("文档处理类型不能为空"),
         AnyOf(values=[ProcessType.AUTOMATIC, ProcessType.CUSTOM], message="处理类型格式错误")
@@ -40,7 +40,7 @@ class CreateDocumentsReq(FlaskForm):
         # 1.校验数据类型与非空
         if not isinstance(field.data, list):
             raise ValidationError("文件id列表格式必须是数组")
-
+        # print("req.data数据:", field, sep='\n')
         # 2.校验数据的长度，最长不能超过10条记录
         if len(field.data) == 0 or len(field.data) > 10:
             raise ValidationError("新增的文档数范围在0-10")

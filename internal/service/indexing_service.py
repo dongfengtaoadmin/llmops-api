@@ -227,7 +227,7 @@ class IndexingService(BaseService):
         process_rule = document.process_rule
         text_splitter = self.process_rule_service.get_text_splitter_by_process_rule(
             process_rule,
-            self.embeddings_service.calculate_token_count,
+            self.embeddings_service.calculate_token_count, # 计算 token 数量
         )
 
         # 2.按照process_rule规则清除多余的字符串
@@ -361,6 +361,58 @@ class IndexingService(BaseService):
 
         with ThreadPoolExecutor(max_workers=5) as executor:
             futures = []
+
+
+            #   假设 lc_segments 有 25 条数据：
+
+            #   # 假设 lc_segments 有 25 条数据
+
+            #   # === 第1次循环 (i=0) ===
+            #   i = 0
+            #   chunks = lc_segments[0:10]   # 取第 1-10 条
+            #   ids = ["uuid-001", "uuid-002", "uuid-003", "uuid-004", "uuid-005",
+            #          "uuid-006", "uuid-007", "uuid-008", "uuid-009", "uuid-010"]
+            #   print(f"批次1: i={i}, chunks数量={len(chunks)}, ids={ids}")
+
+            #   # === 第2次循环 (i=10) ===
+            #   i = 10
+            #   chunks = lc_segments[10:20]  # 取第 11-20 条
+            #   ids = ["uuid-011", "uuid-012", "uuid-013", "uuid-014", "uuid-015",
+            #          "uuid-016", "uuid-017", "uuid-018", "uuid-019", "uuid-020"]
+            #   print(f"批次2: i={i}, chunks数量={len(chunks)}, ids={ids}")
+
+            #   # === 第3次循环 (i=20) ===
+            #   i = 20
+            #   chunks = lc_segments[20:25]  # 取第 21-25 条（只剩5条）
+            #   ids = ["uuid-021", "uuid-022", "uuid-023", "uuid-024", "uuid-025"]
+            #   print(f"批次3: i={i}, chunks数量={len(chunks)}, ids={ids}")
+
+            #   # 循环结束（i=30 超过 len=25）
+
+            #   输出结果
+
+            #   批次1: i=0, chunks数量=10, ids=['uuid-001', 'uuid-002', 'uuid-003', 'uuid-004', 'uuid-005', 'uuid-006', 'uuid-007', 'uuid-008', 'uuid-009', 'uuid-010']
+            #   批次2: i=10, chunks数量=10, ids=['uuid-011', 'uuid-012', 'uuid-013', 'uuid-014', 'uuid-015', 'uuid-016', 'uuid-017', 'uuid-018', 'uuid-019', 'uuid-020']         
+            #   批次3: i=20, chunks数量=5, ids=['uuid-021', 'uuid-022', 'uuid-023', 'uuid-024', 'uuid-025']                                                                      
+                                                                                                                                                                            
+            #   流程图示                                                                                                                                                         
+                                                                                                                                                                            
+            #   lc_segments (25条)                                                                                                                                               
+            #   ┌─────────────────────────────────────────────────────────┐                                                                                                      
+            #   │ [0] [1] [2] ... [9] [10] [11] ... [19] [20] [21] ... [24] │                                                                                                    
+            #   └─────────────────────────────────────────────────────────┘                                                                                                      
+            #         ↓ 切片 [0:10]           ↓ 切片 [10:20]        ↓ 切片 [20:25]                                                                                               
+                                                                                                                                                                            
+            #       批次1 (10条)            批次2 (10条)          批次3 (5条)                                                                                                    
+            #       ids: 10个               ids: 10个              ids: 5个                                                                                                      
+            #            ↓                       ↓                      ↓                                                                                                        
+            #       线程1执行              线程2执行              线程3执行                                                                                                      
+            #            ↓                       ↓                      ↓                                                                                                        
+            #       存入向量库             存入向量库             存入向量库                                                                                                     
+                                                                                                                                                                            
+            #   总结                                                                                                                                                             
+                                                                                                                                                                            
+            #   这段代码的作用是：将大量片段分批（每批10条），并行提交到线程池处理，提高处理效率。
             for i in range(0, len(lc_segments), 10):
                 chunks = lc_segments[i:i + 10]
                 ids = [chunk.metadata["node_id"] for chunk in chunks]
