@@ -12,9 +12,12 @@ DEFAULT_DATASET_DESCRIPTION_FORMATTER = "当你需要回答管理《{name}》的
 
 
 class ProcessType(str, Enum):
-    """文档处理规则类型枚举"""
-    AUTOMATIC = "automatic"
-    CUSTOM = "custom"
+    """文档处理规则类型枚举
+
+    用于决定文档如何被分割和处理
+    """
+    AUTOMATIC = "automatic"  # 自动模式：使用系统默认的分割规则
+    CUSTOM = "custom"        # 自定义模式：使用用户自定义的分割规则
 
 
 # 默认的处理规则
@@ -47,31 +50,43 @@ DEFAULT_PROCESS_RULE = {
 
 
 class DocumentStatus(str, Enum):
-    """文档状态类型枚举"""
-    WAITING = "waiting"
-    PARSING = "parsing"
-    SPLITTING = "splitting"
-    INDEXING = "indexing"
-    COMPLETED = "completed"
-    ERROR = "error"
+    """文档状态类型枚举
+
+    表示文档在知识库构建过程中的生命周期状态
+    """
+    WAITING = "waiting"      # 等待中：文档已上传，等待开始处理
+    PARSING = "parsing"      # 解析中：正在读取和解析文档内容
+    SPLITTING = "splitting"  # 分割中：正在将文档切分成片段
+    INDEXING = "indexing"    # 索引中：正在构建向量索引
+    COMPLETED = "completed"  # 已完成：文档处理成功，可被检索
+    ERROR = "error"          # 处理失败：文档处理过程中发生错误
 
 
 class SegmentStatus(str, Enum):
-    """片段状态类型枚举"""
-    WAITING = "waiting"
-    INDEXING = "indexing"
-    COMPLETED = "completed"
-    ERROR = "error"
+    """片段状态类型枚举
+
+    表示文档片段在索引构建过程中的状态
+    """
+    WAITING = "waiting"      # 等待中：片段已生成，等待开始索引
+    INDEXING = "indexing"    # 索引中：正在为片段生成向量嵌入
+    COMPLETED = "completed"  # 已完成：片段索引构建成功
+    ERROR = "error"          # 处理失败：片段索引构建过程中发生错误
 
 
 class RetrievalStrategy(str, Enum):
-    """检索策略类型枚举"""
-    FULL_TEXT = "full_text"
-    SEMANTIC = "semantic"
-    HYBRID = "hybrid"
+    """检索策略类型枚举
+
+    决定如何从知识库中检索相关内容
+    """
+    FULL_TEXT = "full_text"  # 全文检索：基于关键词匹配的检索方式
+    SEMANTIC = "semantic"    # 语义检索：基于向量相似度的检索方式
+    HYBRID = "hybrid"        # 混合检索：结合全文检索和语义检索的优势
 
 
 class RetrievalSource(str, Enum):
-    """检索来源"""
-    HIT_TESTING = "hit_testing"
-    APP = "app"
+    """检索来源枚举
+
+    标识检索请求的来源场景
+    """
+    HIT_TESTING = "hit_testing"  # 命中测试：知识库检索测试功能
+    APP = "app"                  # 应用调用：通过应用接口发起的检索请求

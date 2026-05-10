@@ -16,9 +16,9 @@ from .document_service import DocumentService
 from .embeddings_service import EmbeddingsService
 # from .indexing_service import IndexingService
 from .jieba_service import JiebaService
-# from .keyword_table_service import KeywordTableService
-# from .process_rule_service import ProcessRuleService
-# from .retrieval_service import RetrievalService
+from .keyword_table_service import KeywordTableService
+from .process_rule_service import ProcessRuleService
+from .retrieval_service import RetrievalService
 # from .segment_service import SegmentService
 from .upload_file_service import UploadFileService
 from .vector_database_service import VectorDatabaseService
@@ -35,10 +35,10 @@ __all__ = [
     "EmbeddingsService",
     "JiebaService",
     "DocumentService",
-    # "IndexingService",
-    # "ProcessRuleService",
-    # "KeywordTableService",
+    "IndexingService",
+    "ProcessRuleService",
+    "KeywordTableService",
     # "SegmentService",
-    # "RetrievalService",
+    "RetrievalService",
     # "ConversationService",
 ]

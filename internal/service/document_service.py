@@ -99,7 +99,7 @@ class DocumentService(BaseService):
             documents.append(document)
 
         # 6.调用异步任务，完成后续操作
-        # build_documents.delay([document.id for document in documents])
+        build_documents.delay([document.id for document in documents])
 
         # 7.返回文档列表与处理批次
         return documents, batch

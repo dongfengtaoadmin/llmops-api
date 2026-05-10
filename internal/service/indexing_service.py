@@ -333,6 +333,7 @@ class IndexingService(BaseService):
         # 2.调用向量数据库，每次存储10条数据，避免一次传递过多的数据
         def thread_func(flask_app: Flask, chunks: list[LCDocument], ids: list[UUID]) -> None:
             """线程函数，执行向量数据库与postgres数据的存储"""
+            # 在这个代码中，with flask_app.app_context(): 的作用是在后台线程中手动创建 Flask 应用上下文，让线程能够安全地使用 Flask 的扩展（如数据库、current_app 等）
             with flask_app.app_context():
                 try:
                     self.vector_database_service.vector_store.add_documents(

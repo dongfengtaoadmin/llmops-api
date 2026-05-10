@@ -9,15 +9,13 @@ from internal.server import Http
 from internal.router import Router
 from config import Config
 import os
-from injector import Injector
 from pkg.sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import dotenv
-from app.http.module import ExtensionModule
+from app.http.module import injector
 # 将 env 文件中的环境变量加载到 os.environ 中
 dotenv.load_dotenv()
 conf = Config()
-injector = Injector([ExtensionModule()])
 
 app = Http(
     __name__,
