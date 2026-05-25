@@ -157,6 +157,7 @@ class IndexingService(BaseService):
 
         # 2.调用向量数据库删除其关联记录
         collection = self.vector_database_service.collection
+        # delete_many 批量删除
         collection.data.delete_many(
             where=Filter.by_property("document_id").equal(document_id),
         )
@@ -330,7 +331,7 @@ class IndexingService(BaseService):
             lc_segment.metadata["document_enabled"] = True
             lc_segment.metadata["segment_enabled"] = True
 
-        # 2.调用向量数据库，每次存储10条数据，避免一次传递过多的数据
+        # 2.调用向量数据库，每次存储10条数据，避免一次传递过多的数据，耗时任务进行多线程可以不用等待
         def thread_func(flask_app: Flask, chunks: list[LCDocument], ids: list[UUID]) -> None:
             """线程函数，执行向量数据库与postgres数据的存储"""
             # 在这个代码中，with flask_app.app_context(): 的作用是在后台线程中手动创建 Flask 应用上下文，让线程能够安全地使用 Flask 的扩展（如数据库、current_app 等）
@@ -419,6 +420,7 @@ class IndexingService(BaseService):
                 futures.append(executor.submit(thread_func, current_app._get_current_object(), chunks, ids))
 
             for future in futures:
+                # 这里就会等等执行
                 future.result()
 
         # 6.更新文档的状态数据

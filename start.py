@@ -24,6 +24,9 @@ import sys
 project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, project_root)
 
+# 设置 HuggingFace 离线模式，使用本地缓存的模型
+os.environ["HF_HUB_OFFLINE"] = "1"
+
 from app.http.app import app
 
 

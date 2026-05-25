@@ -85,7 +85,7 @@ class EmbeddingsService:
         Note:
             使用 tiktoken 库，基于 GPT-3.5 的编码方式计算
         """
-        encoding = tiktoken.encoding_name_for_model("gpt-3.5")
+        encoding = tiktoken.encoding_for_model("gpt-3.5")
         return len(encoding.encode(query))
 
     @property

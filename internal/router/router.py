@@ -7,6 +7,7 @@ from internal.handler import (
     UploadFileHandler,
     DatasetHandler,
     DocumentHandler,
+    SegmentHandler,
 )
 
 from flask import Flask, Blueprint
@@ -23,6 +24,7 @@ class Router:
     upload_file_handler: UploadFileHandler
     dataset_handler: DatasetHandler
     document_handler: DocumentHandler
+    segment_handler: SegmentHandler
     def register_routes(self, app: Flask):
         """注册路由"""
         # 1.创建一个蓝图
@@ -98,12 +100,12 @@ class Router:
         bp.add_url_rule("/datasets", methods=["POST"], view_func=self.dataset_handler.create_dataset)
         bp.add_url_rule("/datasets/<uuid:dataset_id>", view_func=self.dataset_handler.get_dataset)
         bp.add_url_rule("/datasets/<uuid:dataset_id>", methods=["POST"], view_func=self.dataset_handler.update_dataset)
-        # bp.add_url_rule("/datasets/<uuid:dataset_id>/queries", view_func=self.dataset_handler.get_dataset_queries)
-        # bp.add_url_rule(
-        #     "/datasets/<uuid:dataset_id>/delete",
-        #     methods=["POST"],
-        #     view_func=self.dataset_handler.delete_dataset,
-        # )
+        bp.add_url_rule("/datasets/<uuid:dataset_id>/queries", view_func=self.dataset_handler.get_dataset_queries)
+        bp.add_url_rule(
+            "/datasets/<uuid:dataset_id>/delete",
+            methods=["POST"],
+            view_func=self.dataset_handler.delete_dataset,
+        )
         bp.add_url_rule(
             "/datasets/<uuid:dataset_id>/documents",
             view_func=self.document_handler.get_documents_with_page,
@@ -136,39 +138,39 @@ class Router:
             "/datasets/<uuid:dataset_id>/documents/batch/<string:batch>",
             view_func=self.document_handler.get_documents_status,
         )
-        # bp.add_url_rule(
-        #     "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments",
-        #     view_func=self.segment_handler.get_segments_with_page,
-        # )
-        # bp.add_url_rule(
-        #     "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments",
-        #     methods=["POST"],
-        #     view_func=self.segment_handler.create_segment,
-        # )
-        # bp.add_url_rule(
-        #     "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments/<uuid:segment_id>",
-        #     view_func=self.segment_handler.get_segment,
-        # )
-        # bp.add_url_rule(
-        #     "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments/<uuid:segment_id>",
-        #     methods=["POST"],
-        #     view_func=self.segment_handler.update_segment,
-        # )
-        # bp.add_url_rule(
-        #     "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments/<uuid:segment_id>/enabled",
-        #     methods=["POST"],
-        #     view_func=self.segment_handler.update_segment_enabled,
-        # )
-        # bp.add_url_rule(
-        #     "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments/<uuid:segment_id>/delete",
-        #     methods=["POST"],
-        #     view_func=self.segment_handler.delete_segment,
-        # )
-        # bp.add_url_rule(
-        #     "/datasets/<uuid:dataset_id>/hit",
-        #     methods=["POST"],
-        #     view_func=self.dataset_handler.hit,
-        # )
+        bp.add_url_rule(
+            "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments",
+            view_func=self.segment_handler.get_segments_with_page,
+        )
+        bp.add_url_rule(
+            "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments",
+            methods=["POST"],
+            view_func=self.segment_handler.create_segment,
+        )
+        bp.add_url_rule(
+            "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments/<uuid:segment_id>",
+            view_func=self.segment_handler.get_segment,
+        )
+        bp.add_url_rule(
+            "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments/<uuid:segment_id>",
+            methods=["POST"],
+            view_func=self.segment_handler.update_segment,
+        )
+        bp.add_url_rule(
+            "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments/<uuid:segment_id>/enabled",
+            methods=["POST"],
+            view_func=self.segment_handler.update_segment_enabled,
+        )
+        bp.add_url_rule(
+            "/datasets/<uuid:dataset_id>/documents/<uuid:document_id>/segments/<uuid:segment_id>/delete",
+            methods=["POST"],
+            view_func=self.segment_handler.delete_segment,
+        )
+        bp.add_url_rule(
+            "/datasets/<uuid:dataset_id>/hit",
+            methods=["POST"],
+            view_func=self.dataset_handler.hit,
+        )
 
         # 6.在应用上去注册蓝图
         app.register_blueprint(bp)

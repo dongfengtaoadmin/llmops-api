@@ -7,9 +7,10 @@
 """
 from flask_wtf import FlaskForm
 from marshmallow import Schema, fields, pre_dump
-from wtforms import StringField
-from wtforms.validators import DataRequired, Length, URL, Optional
+from wtforms import StringField, IntegerField, FloatField
+from wtforms.validators import DataRequired, Length, URL, Optional, AnyOf, NumberRange
 
+from internal.entity.dataset_entity import RetrievalStrategy
 from internal.model import Dataset
 from pkg.paginator import PaginatorReq
 
@@ -128,3 +129,23 @@ class GetDatasetsWithPageResp(Schema):
             "updated_at": int(data.updated_at.timestamp()),
             "created_at": int(data.created_at.timestamp()),
         }
+
+
+class HitReq(FlaskForm):
+    """知识库召回测试请求"""
+    query = StringField("query", validators=[
+        DataRequired("查询语句不能为空"),
+        Length(max=200, message="查询语句的最大长度不能超过200")
+    ])
+    retrieval_strategy = StringField("retrieval_strategy", validators=[
+        DataRequired("检索策略不能为空"),
+        AnyOf([item.value for item in RetrievalStrategy], message="检索策略格式错误")
+    ])
+    k = IntegerField("k", validators=[
+        DataRequired("最大召回数量不能为空"),
+        NumberRange(min=1, max=10, message="最大召回数量的范围在1-10")
+    ])
+    score = FloatField("score", validators=[
+        NumberRange(min=0, max=0.99, message="最小匹配度范围在0-0.99")
+    ])
+

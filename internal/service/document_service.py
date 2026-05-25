@@ -215,6 +215,7 @@ class DocumentService(BaseService):
             enabled=enabled,
             disabled_at=None if enabled else datetime.now(),
         )
+        # 防止短时间内发起多次请求 这里给上个锁  异步任务那边处理完成后会删除锁
         self.redis_client.setex(cache_key, LOCK_EXPIRE_TIME, 1)
 
         # 6.启用异步任务完成后续操作

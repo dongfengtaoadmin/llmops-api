@@ -29,7 +29,12 @@ class ListField(Field):
                 else:
                     data = valuelist[0]
                     if isinstance(data, str):
-                        self.data = json.loads(data)
+                        # 如果是 JSON 数组字符串，则解析
+                        if data.startswith('[') and data.endswith(']'):
+                            self.data = json.loads(data)
+                        else:
+                            # 否则，单个字符串转为单元素列表
+                            self.data = [data]
                     elif isinstance(data, list):
                         self.data = data
                     else:

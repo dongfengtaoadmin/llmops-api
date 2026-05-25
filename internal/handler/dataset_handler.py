@@ -17,6 +17,7 @@ from internal.schema.dataset_schema import (
     UpdateDatasetReq,
     GetDatasetsWithPageReq,
     GetDatasetsWithPageResp,
+    HitReq,
 )
 from internal.service import DatasetService, EmbeddingsService,JiebaService
 from pkg.paginator import PageModel
@@ -92,3 +93,16 @@ class DatasetHandler:
         resp = GetDatasetsWithPageResp(many=True)
 
         return success_json(PageModel(list=resp.dump(datasets), paginator=paginator))
+
+
+    def hit(self, dataset_id: UUID):
+        """根据传递的知识库id+检索参数执行召回测试"""
+        # 1.提取数据并校验
+        req = HitReq()
+        if not req.validate():
+            return validate_error_json(req.errors)
+
+        # 2.调用服务执行检索策略
+        hit_result = self.dataset_service.hit(dataset_id, req)
+
+        return success_json(hit_result)

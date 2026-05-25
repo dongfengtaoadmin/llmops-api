@@ -37,8 +37,10 @@ class KeywordTableService(BaseService):
 
         return keyword_table
 
+    # 这里删除的目的也是为了保证 检索的时候不会有 不准确的 关键词
     def delete_keyword_table_from_ids(self, dataset_id: UUID, segment_ids: list[UUID]) -> None:
         """根据传递的知识库id+片段id列表删除对应关键词表中多余的数据"""
+        # 比如删除文档 1 的时候 再去删除 文档 2 同时更新 keyword_tabl 会有冲突 这里是有锁 等待
         # 1.删除知识库关键词表里多余的数据，该操作需要上锁，避免在并发的情况下拿到错误的数据
         cache_key = LOCK_KEYWORD_TABLE_UPDATE_KEYWORD_TABLE.format(dataset_id=dataset_id)
         with self.redis_client.lock(cache_key, timeout=LOCK_EXPIRE_TIME):

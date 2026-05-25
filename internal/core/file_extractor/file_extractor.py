@@ -81,8 +81,8 @@ class FileExtractor:
         """加载传入的upload_file记录，返回LangChain文档列表或者字符串"""
         # 1.创建一个临时的文件夹
         with tempfile.TemporaryDirectory() as temp_dir:
-            # 2.构建一个临时文件路径
-            file_path = os.path.join(temp_dir, os.path.basename(upload_file.key))
+            # 2.构建一个临时文件路径（使用原始文件名，保留扩展名）
+            file_path = os.path.join(temp_dir, upload_file.name)
 
             # 3.将对象存储中的文件下载到本地
             self.cos_service.download_file(upload_file.key, file_path)
