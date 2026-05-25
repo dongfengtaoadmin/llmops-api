@@ -11,7 +11,7 @@ from wtforms import StringField, IntegerField, FloatField
 from wtforms.validators import DataRequired, Length, URL, Optional, AnyOf, NumberRange
 
 from internal.entity.dataset_entity import RetrievalStrategy
-from internal.model import Dataset
+from internal.model import Dataset, DatasetQuery
 from pkg.paginator import PaginatorReq
 
 
@@ -149,3 +149,22 @@ class HitReq(FlaskForm):
         NumberRange(min=0, max=0.99, message="最小匹配度范围在0-0.99")
     ])
 
+
+
+class GetDatasetQueriesResp(Schema):
+    """获取知识库最近查询响应结构"""
+    id = fields.UUID(dump_default="")
+    dataset_id = fields.UUID(dump_default="")
+    query = fields.String(dump_default="")
+    source = fields.String(dump_default="")
+    created_at = fields.Integer(dump_default=0)
+
+    @pre_dump
+    def process_data(self, data: DatasetQuery, **kwargs):
+        return {
+            "id": data.id,
+            "dataset_id": data.dataset_id,
+            "query": data.query,
+            "source": data.source,
+            "created_at": datetime_to_timestamp(data.created_at),
+        }

@@ -208,3 +208,22 @@ class DatasetService(BaseService):
         except Exception as e:
             logging.exception(f"删除知识库失败, dataset_id: {dataset_id}, 错误信息: {str(e)}")
             raise FailException("删除知识库失败，请稍后重试")
+
+
+
+    def get_dataset_queries(self, dataset_id: UUID) -> list[DatasetQuery]:
+        """根据传递的知识库id获取最近的10条查询记录"""
+        # todo:等待授权认证模块完成进行切换调整
+        account_id = "46db30d1-3199-4e79-a0cd-abf12fa6858f"
+
+        # 1.获取知识库并校验权限
+        dataset = self.get(Dataset, dataset_id)
+        if dataset is None or str(dataset.account_id) != account_id:
+            raise NotFoundException("该知识库不存在")
+
+        # 2.调用知识库查询模型查找最近的10条记录
+        dataset_queries = self.db.session.query(DatasetQuery).filter(
+            DatasetQuery.dataset_id == dataset_id,
+        ).order_by(desc("created_at")).limit(10).all()
+
+        return dataset_queries

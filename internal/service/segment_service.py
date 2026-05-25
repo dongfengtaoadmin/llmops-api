@@ -74,7 +74,7 @@ class SegmentService(BaseService):
             Segment.document_id == document_id,
         ).scalar()
 
-        # 5.检测是否传递了keywords，如果没有传递的话，调用jieba服务生成关键词
+        # 5.检测是否传递了keywords，如果没有传递的话，调用jieba服务提取生成关键词
         if req.keywords.data is None or len(req.keywords.data) == 0:
             req.keywords.data = self.jieba_service.extract_keywords(req.content.data, 10)
 
@@ -296,7 +296,7 @@ class SegmentService(BaseService):
         if cache_result is not None:
             raise FailException("当前文档片段正在修改状态，请稍后尝试")
 
-        # 5.上锁并更新对应的数据，涵盖postgres记录、weaviate、关键词表
+        # 5.上锁并更新对应的数据，涵盖postgres记录、weaviate、关键词表  如果没有锁，当多个请求同时修改同一个 segment 时，可能出现部分操作成功、部分失败的情况，导致数据不一致。
         with self.redis_client.lock(cache_key, LOCK_EXPIRE_TIME):
             try:
                 # 6.修改postgres数据库里的文档片段状态

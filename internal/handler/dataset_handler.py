@@ -18,8 +18,14 @@ from internal.schema.dataset_schema import (
     GetDatasetsWithPageReq,
     GetDatasetsWithPageResp,
     HitReq,
+    GetDatasetQueriesResp,
 )
-from internal.service import DatasetService, EmbeddingsService,JiebaService
+from internal.service import (
+    DatasetService,
+    EmbeddingsService,
+    JiebaService,
+    VectorDatabaseService,
+)
 from pkg.paginator import PageModel
 from internal.model import UploadFile
 from pkg.response import validate_error_json, success_message, success_json
@@ -45,6 +51,12 @@ class DatasetHandler:
         # keywords = self.jieba_service.extract_keywords(query)
         # # keywords = self.embeddings_service.embeddings.embed_query(query)
         # return success_json({"keywords": keywords})
+
+    def get_dataset_queries(self, dataset_id: UUID):
+        """根据传递的知识库id获取最近的10条查询记录"""
+        dataset_queries = self.dataset_service.get_dataset_queries(dataset_id)
+        resp = GetDatasetQueriesResp(many=True)
+        return success_json(resp.dump(dataset_queries))
 
     def create_dataset(self):
         """创建知识库"""
@@ -93,6 +105,12 @@ class DatasetHandler:
         resp = GetDatasetsWithPageResp(many=True)
 
         return success_json(PageModel(list=resp.dump(datasets), paginator=paginator))
+
+
+    def delete_dataset(self, dataset_id: UUID):
+        """根据传递的知识库id删除知识库"""
+        self.dataset_service.delete_dataset(dataset_id)
+        return success_message("删除知识库成功")
 
 
     def hit(self, dataset_id: UUID):
