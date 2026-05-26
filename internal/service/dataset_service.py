@@ -5,6 +5,7 @@
 @Author  : thezehui@gmail.com
 @File    : dataset_service.py
 """
+import logging
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -12,7 +13,7 @@ from injector import inject
 from sqlalchemy import desc
 
 from internal.entity.dataset_entity import DEFAULT_DATASET_DESCRIPTION_FORMATTER
-from internal.exception import ValidateErrorException, NotFoundException
+from internal.exception import ValidateErrorException, NotFoundException, FailException
 from internal.lib.helper import datetime_to_timestamp
 from internal.model import Dataset, Segment, DatasetQuery, AppDatasetJoin
 from internal.schema.dataset_schema import (
@@ -25,6 +26,8 @@ from internal.task.dataset_task import delete_dataset
 from pkg.paginator import Paginator
 from pkg.sqlalchemy import SQLAlchemy
 from .base_service import BaseService
+from .retrieval_service import RetrievalService
+
 
 
 @inject
@@ -32,7 +35,8 @@ from .base_service import BaseService
 class DatasetService(BaseService):
     """知识库服务"""
     db: SQLAlchemy
-
+    retrieval_service: RetrievalService
+    
     def create_dataset(self, req: CreateDatasetReq) -> Dataset:
         """根据传递的请求信息创建知识库"""
         # todo:等待授权认证模块完成进行切换调整

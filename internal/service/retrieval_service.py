@@ -53,7 +53,10 @@ class RetrievalService(BaseService):
         dataset_ids = [dataset.id for dataset in datasets]
 
         # 2.构建不同种类的检索器
-        from internal.core.retrievers import SemanticRetriever, FullTextRetriever
+        # 函数内导入（延迟导入）  
+        # 循环引入   就是 比如 retrievers 里面用了  JiebaService  但是当前 service 也用了 JiebaService 就容易触发 循环引入                                                                                        
+        from internal.core.retrievers import SemanticRetriever, FullTextRetriever     
+        # 语义检索器 / 向量检索器 
         semantic_retriever = SemanticRetriever(
             dataset_ids=dataset_ids,
             vector_store=self.vector_database_service.vector_store,
@@ -62,6 +65,7 @@ class RetrievalService(BaseService):
                 "score_threshold": score,
             },
         )
+        # 全文检索器 / 关键词检索器
         full_text_retriever = FullTextRetriever(
             db=self.db,
             dataset_ids=dataset_ids,
