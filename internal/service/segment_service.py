@@ -351,6 +351,7 @@ class SegmentService(BaseService):
 
         # 3.删除文档片段并获取该片段的文档信息
         document = segment.document
+        print(document,'documentdocumentdocument dft')
         self.delete(segment)
 
         # 4.同步删除关键词表中属于该片段的关键词
