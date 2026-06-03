@@ -285,14 +285,14 @@ class AppHandler:
         # })
 
 
-        query = "你好"  
+        # query = "你好"  
      
         # # 2. 调用会话服务生成会话名称
-        name = self.conversation_service.generate_conversation_name(query)
+        # name = self.conversation_service.generate_conversation_name(query)
 
-        return success_json({
-            "name": name,
-        })
+        # return success_json({
+        #     "name": name,
+        # })
 
 
           # 2. 调用会话服务生成建议问题
@@ -301,3 +301,16 @@ class AppHandler:
         # return success_json({
         #     "questions": questions,
         # })
+
+        from internal.core.agent.agents import FunctionCallAgent
+        from internal.core.agent.entities.agent_entity import AgentConfig
+        from langchain_openai import ChatOpenAI
+
+        agent = FunctionCallAgent(AgentConfig(
+            llm=ChatOpenAI(model="gpt-4o-mini"),
+            preset_prompt="你是一个拥有20年经验的诗人，请根据用户提供的主题来写一首诗"
+        ))
+        state = agent.run("程序员", [], "")
+        content = state["messages"][-1].content
+
+        return success_json({"content": content})

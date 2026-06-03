@@ -167,6 +167,20 @@ class FunctionCallAgent(BaseAgent):
         preset_messages.append(HumanMessage(human_message.content))
 
         # 7.处理预设消息，将预设消息添加到用户消息前，先去删除用户的原始消息，然后补充一个新的代替
+                # 最终 messages 状态
+        # python
+        # state["messages"] = [
+        #     # 保留的历史消息（没有变化）
+        #     HumanMessage(id="msg1", content="帮我写个Python函数"),
+        #     AIMessage(id="msg2", content="好的，请问是什么函数？"),
+            
+        #     # 新追加的消息（替换了原来的 msg3）
+        #     SystemMessage(content="你是AI助手，预设提示：用中文回答，长期记忆：用户喜欢简洁代码"),
+        #     HumanMessage(content="帮我写个Python函数"),      # 重复了 msg1
+        #     AIMessage(content="好的，请问是什么函数？"),      # 重复了 msg2
+        #     HumanMessage(content="计算斐波那契数列")          # 原 msg3 的内容，但这是新对象
+        # ]
+        
         return {
             "messages": [RemoveMessage(id=human_message.id), *preset_messages],
         }
@@ -201,6 +215,9 @@ class FunctionCallAgent(BaseAgent):
         llm = self.llm
 
         # 3.检测大语言模型实例是否有bind_tools方法，如果没有则不绑定，如果有还需要检测tools是否为空，不为空则绑定
+        # if (hasattr(llm, "bind_tools")           # 条件1：llm对象有 bind_tools 这个属性
+        # and callable(getattr(llm, "bind_tools"))  # 条件2：bind_tools 是一个可调用的方法
+        # and len(self.agent_config.tools) > 0):   # 条件3：工具列表不为空
         if hasattr(llm, "bind_tools") and callable(getattr(llm, "bind_tools")) and len(self.agent_config.tools) > 0:
             llm = llm.bind_tools(self.agent_config.tools)
 

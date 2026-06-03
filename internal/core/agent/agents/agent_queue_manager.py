@@ -51,6 +51,7 @@ class AgentQueueManager:
         while True:
             try:
                 # 3.从队列中提取数据并检测数据是否存在，如果存在则使用yield关键字返回
+                # timeout=1 是等待 1 秒的意思
                 item = self.queue(task_id).get(timeout=1)
                 if item is None:
                     break
