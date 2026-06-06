@@ -11,10 +11,10 @@
 - 支持热更新（文件变化自动重启）
 
 【示例】
-python start_celery.py              # 开发模式 + 热更新
+python start_celery.py              # 开发模式（无热更新）
 python start_celery.py --prod       # 生产模式
-python start_celery.py --no-reload  # 开发模式（不热更新）
-python start_celery.py --pool solo  # macOS 推荐使用 solo 池
+python start_celery.py --reload    # 开发模式 + 热更新
+python start_celery.py --pool solo # macOS 推荐使用 solo 池
 """
 import argparse
 import os
@@ -157,9 +157,9 @@ def main():
         help="生产模式（loglevel=WARNING，不热更新）"
     )
     parser.add_argument(
-        "--no-reload",
+        "--reload",
         action="store_true",
-        help="禁用热更新"
+        help="启用热更新（代码修改自动重启）"
     )
     parser.add_argument(
         "--pool",
@@ -190,8 +190,8 @@ def main():
     else:
         loglevel = "WARNING" if args.prod else "INFO"
 
-    # 确定是否启用热更新
-    enable_autoreload = not args.prod and not args.no_reload
+    # 确定是否启用热更新（默认关闭，避免监听文件变化导致电脑卡顿）
+    enable_autoreload = not args.prod and args.reload
 
     # 确保日志目录存在
     log_dir = os.path.join(project_root, "storage", "log")

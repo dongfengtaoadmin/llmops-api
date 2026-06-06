@@ -1,4 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+@Time    : 2024/3/29 15:01
+@Author  : thezehui@gmail.com
+@File    : router.py
+"""
 from dataclasses import dataclass
+
+from flask import Flask, Blueprint
+from injector import inject
 
 from internal.handler import (
     AppHandler,
@@ -8,24 +18,28 @@ from internal.handler import (
     DatasetHandler,
     DocumentHandler,
     SegmentHandler,
+    OAuthHandler,
+    AccountHandler,
+    AuthHandler,
 )
 
-from flask import Flask, Blueprint
-from injector import inject
 
 @inject
 @dataclass
 class Router:
     """路由"""
-
-    app_handler:AppHandler
+    app_handler: AppHandler
     builtin_tool_handler: BuiltinToolHandler
     api_tool_handler: ApiToolHandler
     upload_file_handler: UploadFileHandler
     dataset_handler: DatasetHandler
     document_handler: DocumentHandler
     segment_handler: SegmentHandler
-    def register_routes(self, app: Flask):
+    oauth_handler: OAuthHandler
+    account_handler: AccountHandler
+    auth_handler: AuthHandler
+
+    def register_router(self, app: Flask):
         """注册路由"""
         # 1.创建一个蓝图
         bp = Blueprint("llmops", __name__, url_prefix="")
@@ -38,15 +52,12 @@ class Router:
         bp.add_url_rule("/app/<uuid:id>", methods=["POST"], view_func=self.app_handler.update_app)
         bp.add_url_rule("/app/<uuid:id>/delete", methods=["POST"], view_func=self.app_handler.delete_app)
 
-
         # 3.内置插件广场模块
         bp.add_url_rule("/builtin-tools", view_func=self.builtin_tool_handler.get_builtin_tools)
-        # {{base_url}}/builtin-tools/gaode/tools/gaode_weather
         bp.add_url_rule(
             "/builtin-tools/<string:provider_name>/tools/<string:tool_name>",
             view_func=self.builtin_tool_handler.get_provider_tool,
         )
-         # {{base_url}}/builtin-tools/gaode/icon
         bp.add_url_rule(
             "/builtin-tools/<string:provider_name>/icon",
             view_func=self.builtin_tool_handler.get_provider_icon,
@@ -89,7 +100,6 @@ class Router:
             methods=["POST"],
             view_func=self.api_tool_handler.delete_api_tool_provider,
         )
-
 
         # 4.上传文件模块
         bp.add_url_rule("/upload-files/file", methods=["POST"], view_func=self.upload_file_handler.upload_file)
@@ -172,7 +182,32 @@ class Router:
             view_func=self.dataset_handler.hit,
         )
 
-        # 6.在应用上去注册蓝图
-        app.register_blueprint(bp)
+        # 6.授权认证模块
+        bp.add_url_rule(
+            "/oauth/<string:provider_name>",
+            view_func=self.oauth_handler.provider,
+        )
+        bp.add_url_rule(
+            "/oauth/authorize/<string:provider_name>",
+            methods=["POST"],
+            view_func=self.oauth_handler.authorize,
+        )
+        bp.add_url_rule(
+            "/auth/password-login",
+            methods=["POST"],
+            view_func=self.auth_handler.password_login,
+        )
+        bp.add_url_rule(
+            "/auth/logout",
+            methods=["POST"],
+            view_func=self.auth_handler.logout,
+        )
 
-    
+        # 7.账号设置模块
+        bp.add_url_rule("/account", view_func=self.account_handler.get_current_user)
+        bp.add_url_rule("/account/password", methods=["POST"], view_func=self.account_handler.update_password)
+        bp.add_url_rule("/account/name", methods=["POST"], view_func=self.account_handler.update_name)
+        bp.add_url_rule("/account/avatar", methods=["POST"], view_func=self.account_handler.update_avatar)
+
+        # 6.在应用上注册蓝图
+        app.register_blueprint(bp)

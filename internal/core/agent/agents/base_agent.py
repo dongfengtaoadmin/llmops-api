@@ -11,6 +11,7 @@ from threading import Thread
 from typing import Optional, Any, Iterator
 
 from langchain_core.language_models import BaseLanguageModel
+from langchain_core.messages import AnyMessage
 from langchain_core.load import Serializable
 from langchain_core.pydantic_v1 import PrivateAttr
 from langchain_core.runnables import Runnable, RunnableConfig

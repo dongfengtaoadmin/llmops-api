@@ -1,21 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-@Time    : 2024/3/29 10:42
+@Time    : 2024/3/29 10:43
 @Author  : thezehui@gmail.com
 @File    : __init__.py.py
 """
-# 从当前文件夹下开始找 从中导入 AppHandler 类
+from .account_handler import AccountHandler
+from .api_tool_handler import ApiToolHandler
 from .app_handler import AppHandler
+from .auth_handler import AuthHandler
 from .builtin_tool_handler import BuiltinToolHandler
-from .api_tool_handler import ApiToolHandler 
-from .upload_file_handler import UploadFileHandler 
 from .dataset_handler import DatasetHandler
-from .segment_handler import SegmentHandler
 from .document_handler import DocumentHandler
+from .oauth_handler import OAuthHandler
+from .segment_handler import SegmentHandler
+from .upload_file_handler import UploadFileHandler
 
-# 魔术变量 导入当前文件夹下所有内容
-__all__ = ["AppHandler","BuiltinToolHandler","ApiToolHandler","UploadFileHandler","DatasetHandler","DocumentHandler","SegmentHandler"]
-
-# 用了 __all__ 之后就可以 在别的地方使用 
-# from internal.handler import AppHandler
+__all__ = [
+    "AppHandler",
+    "BuiltinToolHandler",
+    "ApiToolHandler",
+    "UploadFileHandler",
+    "DatasetHandler",
+    "DocumentHandler",
+    "SegmentHandler",
+    "OAuthHandler",
+    "AccountHandler",
+    "AuthHandler",
+]

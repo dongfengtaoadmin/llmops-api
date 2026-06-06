@@ -8,6 +8,9 @@
 from internal.server import Http
 from internal.router import Router
 from config import Config
+from internal.middleware import Middleware
+from flask_login import LoginManager
+from flask_migrate import Migrate
 import os
 from pkg.sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -20,9 +23,11 @@ conf = Config()
 app = Http(
     __name__,
     router=injector.get(Router),
-    config=conf,
+    conf=conf,
     db=injector.get(SQLAlchemy),
     migrate=injector.get(Migrate),
+    login_manager=injector.get(LoginManager),
+    middleware=injector.get(Middleware),
 )
 
 
