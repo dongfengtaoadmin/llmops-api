@@ -8,7 +8,7 @@
 import os
 import urllib.parse
 
-import requests
+import httpx
 
 from internal.exception import FailException
 from .oauth import OAuth, OAuthUserInfo
@@ -23,27 +23,30 @@ class GithubOAuth(OAuth):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.session = requests.Session()
-        # 某些网络环境需要依赖系统代理访问 GitHub，这里通过环境变量控制是否信任代理配置。
-        self.session.trust_env = os.getenv("GITHUB_OAUTH_TRUST_ENV_PROXY", "true").lower() == "true"
-        explicit_proxies = self._get_explicit_proxies()
-        if explicit_proxies:
-            self.session.proxies.update(explicit_proxies)
+        self.timeout = 30.0
+        self.trust_env = os.getenv("GITHUB_OAUTH_TRUST_ENV_PROXY", "true").lower() == "true"
+        self.proxy = self._get_proxy()
 
     @staticmethod
-    def _get_explicit_proxies() -> dict[str, str]:
-        """读取 GitHub OAuth 专用代理配置，优先级高于 requests 的 trust_env 自动代理。"""
+    def _get_proxy() -> str | None:
+        """读取 GitHub OAuth 专用代理配置，优先级高于 httpx 的 trust_env 自动代理。"""
         shared_proxy = os.getenv("GITHUB_OAUTH_PROXY")
         http_proxy = os.getenv("GITHUB_OAUTH_HTTP_PROXY") or shared_proxy
         https_proxy = os.getenv("GITHUB_OAUTH_HTTPS_PROXY") or shared_proxy
 
-        proxies: dict[str, str] = {}
-        if http_proxy:
-            proxies["http"] = http_proxy
-        if https_proxy:
-            proxies["https"] = https_proxy
+        return https_proxy or http_proxy
 
-        return proxies
+    def _get_http_client(self) -> httpx.Client:
+        """构建 GitHub OAuth 使用的 HTTP 客户端。"""
+        client_kwargs = {
+            "timeout": self.timeout,
+            "follow_redirects": True,
+            "trust_env": self.trust_env,
+        }
+        if self.proxy:
+            client_kwargs["proxy"] = self.proxy
+
+        return httpx.Client(**client_kwargs)
 
     @staticmethod
     def _get_proxy_hint() -> str:
@@ -98,21 +101,21 @@ class GithubOAuth(OAuth):
 
         # 2.发起post请求并获取相应的数据
         try:
-            resp = self.session.post(
-                self._ACCESS_TOKEN_URL,
-                data=data,
-                headers=headers,
-                timeout=30,
-            )
-            resp.raise_for_status()
-            resp_json = resp.json()
-        except requests.exceptions.Timeout as exc:
+            with self._get_http_client() as client:
+                resp = client.post(
+                    self._ACCESS_TOKEN_URL,
+                    data=data,
+                    headers=headers,
+                )
+                resp.raise_for_status()
+                resp_json = resp.json()
+        except httpx.TimeoutException as exc:
             raise FailException(
                 "连接 GitHub 超时，请检查当前网络是否可访问 github.com，"
                 "如本机依赖代理，请确认已配置代理并将 GITHUB_OAUTH_TRUST_ENV_PROXY=true。"
                 f"{self._get_proxy_hint()}"
             ) from exc
-        except requests.exceptions.RequestException as exc:
+        except httpx.HTTPError as exc:
             raise FailException(f"请求 GitHub Access Token 接口失败: {exc}") from exc
 
         # 3.提取access_token对应的数据
@@ -127,24 +130,29 @@ class GithubOAuth(OAuth):
 
     def get_raw_user_info(self, token: str) -> dict:
         # 1.组装请求数据
-        headers = {"Authorization": f"token {token}"}
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
 
         # 2.发起get请求获取用户数据
         try:
-            resp = self.session.get(self._USER_INFO_URL, headers=headers, timeout=30)
-            resp.raise_for_status()
-            raw_info = resp.json()
+            with self._get_http_client() as client:
+                resp = client.get(self._USER_INFO_URL, headers=headers)
+                resp.raise_for_status()
+                raw_info = resp.json()
 
-            # 3.发起get请求获取用户邮箱
-            email_resp = self.session.get(self._EMAIL_INFO_URL, headers=headers, timeout=30)
-            email_resp.raise_for_status()
-            email_info = email_resp.json()
-        except requests.exceptions.Timeout as exc:
+                # 3.发起get请求获取用户邮箱
+                email_resp = client.get(self._EMAIL_INFO_URL, headers=headers)
+                email_resp.raise_for_status()
+                email_info = email_resp.json()
+        except httpx.TimeoutException as exc:
             raise FailException(
                 "获取 GitHub 用户信息超时，请检查当前网络是否可访问 api.github.com。"
                 f"{self._get_proxy_hint()}"
             ) from exc
-        except requests.exceptions.RequestException as exc:
+        except httpx.HTTPError as exc:
             raise FailException(f"获取 GitHub 用户信息失败: {exc}") from exc
 
         # 4.提取邮箱数据
