@@ -11,6 +11,12 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from app.http.app import app as _app
 from internal.extension.database_extension import db as _db
 
+ACCESS_TOKEN = (
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+    "eyJzdWIiOiI0NmRiMzBkMS0zMTk5LTRlNzktYTBjZC1hYmYxMmZhNjg1OGYiLCJpc3MiOiJsbG1vcHMiLCJleHAiOjE3ODMzNTIxMjd9."
+    "wFlkhKSOzkQvNgwVNrPyvAEebbQk0qMVKGikX9COjIM"
+)
+
 
 @pytest.fixture
 def app():
@@ -23,6 +29,7 @@ def app():
 def client(app):
     """获取Flask应用的测试应用，并返回"""
     with app.test_client() as client:
+        client.environ_base["HTTP_AUTHORIZATION"] = f"Bearer {ACCESS_TOKEN}"
         yield client
 
 
@@ -31,6 +38,7 @@ def db(app):
     """创建一个临时的数据库会话，当测试结束的时候回滚整个事务，从而实现测试与数据实际隔离"""
     with app.app_context():
         # 1.获取数据库连接并创建事务
+        origin_session = _db.session
         connection = _db.engine.connect()
         transaction = connection.begin()
 
@@ -46,3 +54,4 @@ def db(app):
         transaction.rollback()
         connection.close()
         session.remove()
+        _db.session = origin_session
