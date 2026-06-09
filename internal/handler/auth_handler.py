@@ -36,7 +36,6 @@ class AuthHandler:
 
         return success_json(resp.dump(credential))
 
-    @login_required
     def logout(self):
         """退出登录，用于提示前端清除授权凭证"""
         logout_user()

@@ -67,7 +67,7 @@ class AppService(BaseService):
 
     def create_app(self, req: CreateAppReq, account: Account) -> App:
         """创建Agent应用服务"""
-        # 1.开启数据库自动提交上下文
+        # 1.开启数据库自动提交上下文 创建应用的业务逻辑 - 多表关联操作 所以要单独 开启自动事务提交 
         with self.db.auto_commit():
             # 2.创建应用记录，并刷新数据，从而可以拿到应用id
             app = App(
@@ -78,7 +78,8 @@ class AppService(BaseService):
                 status=AppStatus.DRAFT,
             )
             self.db.session.add(app)
-            self.db.session.flush()
+            self.db.session.flush() #此时 app.id 被填充为数据库自增的值
+
 
             # 3.添加草稿记录
             app_config_version = AppConfigVersion(
@@ -204,6 +205,21 @@ class AppService(BaseService):
         # 13.判断是否需要更新草稿配置中的工具列表信息
         if draft_tools != validate_tools:
             # 14.更新草稿配置中的工具列表
+            #                                                             
+            #   这个 update 方法不需要显式的 WHERE 条件！                     
+                                                                        
+            #   原因：                                                        
+            #   - 它接收的是一个已加载到内存中的模型实例（draft_app_config）
+            #   - SQLAlchemy ORM 机制会自动跟踪这个实例的主键（id）           
+            #   - 当使用 setattr 修改实例属性后，SQLAlchemy 会自动生成如下的
+            #   SQL：                                                         
+            #   UPDATE app_config_version                                     
+            #   SET tools = :new_tools_value                                  
+            #   WHERE id = :draft_app_config_id                               
+                                                                            
+            #   3. 更新的是哪个表                                             
+                                                                            
+            #   更新的是 app_config_version 表，不是 app 表。 
             self.update(draft_app_config, tools=validate_tools)
 
         # 15.校验知识库列表，如果引用了不存在/被删除的知识库，需要剔除数据并更新，同时获取知识库的额外信息
@@ -326,7 +342,7 @@ class AppService(BaseService):
             self.create(AppDatasetJoin, app_id=app_id, dataset_id=dataset["id"])
 
         # 6.获取应用草稿记录，并移除id、version、config_type、updated_at、created_at字段
-        draft_app_config_copy = app.draft_app_config.__dict__.copy()
+        draft_app_config_copy = app.draft_app_config.__dict__.copy() # 将 app.draft_app_config 对象转换为字典，并创建一个副本。
         remove_fields = ["id", "version", "config_type", "updated_at", "created_at", "_sa_instance_state"]
         for field in remove_fields:
             draft_app_config_copy.pop(field)
@@ -447,7 +463,7 @@ class AppService(BaseService):
         if draft_app_config["long_term_memory"]["enable"] is False:
             raise FailException("该应用并未开启长期记忆，无法获取")
 
-        # 3.更新应用长期记忆
+        # 3.更新应用长期记忆 表
         debug_conversation = app.debug_conversation
         self.update(debug_conversation, summary=summary)
 

@@ -105,7 +105,7 @@ class OAuthService(BaseService):
         )
 
         # 10.生成授权凭证信息
-        expire_at = int((datetime.now() + timedelta(days=30)).timestamp())
+        expire_at = int((datetime.now() + timedelta(days=365)).timestamp())
         payload = {
             "sub": str(account.id),
             "iss": "llmops",
