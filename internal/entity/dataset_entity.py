@@ -6,6 +6,7 @@
 @File    : dataset_entity.py
 """
 from enum import Enum
+from logging import DEBUG
 
 # 默认知识库描述格式化文本
 DEFAULT_DATASET_DESCRIPTION_FORMATTER = "当你需要回答管理《{name}》的时候可以引用该知识库。"
@@ -90,3 +91,4 @@ class RetrievalSource(str, Enum):
     """
     HIT_TESTING = "hit_testing"  # 命中测试：知识库检索测试功能
     APP = "app"                  # 应用调用：通过应用接口发起的检索请求
+    DEBUGGER = 'debugger'

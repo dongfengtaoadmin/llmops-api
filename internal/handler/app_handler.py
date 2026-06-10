@@ -173,18 +173,24 @@ class AppHandler:
         resp = GetDebugConversationMessagesWithPageResp(many=True)
 
         return success_json(PageModel(list=resp.dump(messages), paginator=paginator))
-
+    
     @login_required
     def ping(self):
-        from internal.core.agent.agents import FunctionCallAgent
-        from internal.core.agent.entities.agent_entity import AgentConfig
-        from langchain_openai import ChatOpenAI
+        from flask import current_app
+        from internal.entity.dataset_entity import RetrievalStrategy, RetrievalSource
+        dataset_retrieval = self.retrieval_service.create_langchain_tool_from_search(
+            flask_app=current_app._get_current_object(),
+            dataset_ids=["1b77b06e-766b-4ff0-8363-8ad15eb8d6b4", "b49a9443-0b9b-4eca-b3d9-02388ae84ca3"],
+            account_id=current_user.id,
+            retrieval_strategy=RetrievalStrategy.SEMANTIC,
+            k=10,
+            score=0.5,
+            retrival_source=RetrievalSource.DEBUGGER,
+        )
+        print(f"工具名称:", dataset_retrieval.name)
+        print(f"工具描述:", dataset_retrieval.description)
+        print(f"工具参数:", dataset_retrieval.args)
 
-        agent = FunctionCallAgent(AgentConfig(
-            llm=ChatOpenAI(model="gpt-4o-mini"),
-            preset_prompt="你是一个拥有20年经验的诗人，请根据用户提供的主题来写一首诗"
-        ))
-        state = agent.run("程序员", [], "")
-        content = state["messages"][-1].content
+        content = dataset_retrieval.invoke({"query": "能简单介绍下什么是LLMOps么"})
 
         return success_json({"content": content})
