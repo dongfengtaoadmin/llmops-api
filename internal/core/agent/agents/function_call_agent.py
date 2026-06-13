@@ -28,52 +28,13 @@ from internal.core.agent.entities.agent_entity import (
 from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
 from internal.exception import FailException
 from .base_agent import BaseAgent
-
+# 是的，它们共享同一个 state                                                            
+                                                                                        
+#   LangGraph 的 StateGraph 会维护一个全局共享的状态对象，所有节点访问的是同一个 AgentState
+#   实例。 
 
 class FunctionCallAgent(BaseAgent):
     """基于函数/工具调用的智能体"""
-    def run(self, query: str, history: list[AnyMessage] = None, long_term_memory: str = ""):
-        """运行智能体应用，并使用yield关键字返回对应的数据"""
-        # 1.预处理传递的数据
-        if history is None:
-            history = []
-
-        # 2.调用函数构建智能体
-        agent = self._build_graph()
-
-        # 3.调用智能体获取数据
-        thread = Thread(
-            target=agent.invoke,
-            args=(
-                {
-                    "messages": [HumanMessage(content=query)],
-                    "history": history,
-                    "long_term_memory": long_term_memory,
-                },
-            )
-        )
-        thread.start()
-
-    def _build_graph(self) -> CompiledStateGraph:
-        """构建LangGraph图结构编译程序"""
-        # 1.创建图
-        graph = StateGraph(AgentState)
-
-        # 2.添加节点
-        graph.add_node("long_term_memory_recall", self._long_term_memory_recall_node)
-        graph.add_node("llm", self._llm_node)
-        graph.add_node("tools", self._tools_node)
-
-        # 3.添加边，并设置起点和终点
-        graph.set_entry_point("long_term_memory_recall")
-        graph.add_edge("long_term_memory_recall", "llm")
-        graph.add_conditional_edges("llm", self._tools_condition)
-        graph.add_edge("tools", "llm")
-
-        # 4.编译应用并返回
-        agent = graph.compile()
-
-        return agent
 
     def _build_agent(self) -> CompiledStateGraph:
         """构建LangGraph图结构编译程序"""
@@ -99,6 +60,18 @@ class FunctionCallAgent(BaseAgent):
         return agent
 
     def _preset_operation_node(self, state: AgentState) -> AgentState:
+    #   真实对话流程                                                                                                
+                                                                                                                
+    #   用户发起 query: "帮我写个代码"                                                                              
+    #               │                                                                                               
+    #               ▼                                                                                               
+    #   ┌─────────────────────────────────────────────────────────────────┐                                         
+    #   │  preset_operation (入口点 - 自动执行)                            │                                        
+    #   │                                                                  │                                        
+    #   │  检查 query 是否包含敏感词                                       │                                        
+    #   │  ├─ 包含敏感词 → 直接返回预设回复，结束                           │                                       
+    #   │  └─ 不包含     → 继续                                            │                                      
+    #   └─────────────────────────────────────────────────────────────────┘    
         """预设操作，涵盖：输入审核、数据预处理、条件边等"""
         # 1.获取审核配置与用户输入query
         review_config = self.agent_config.review_config
@@ -108,6 +81,11 @@ class FunctionCallAgent(BaseAgent):
         if review_config["enable"] and review_config["inputs_config"]["enable"]:
             contains_keyword = any(keyword in query for keyword in review_config["keywords"])
             # 3.如果包含敏感词则执行后续步骤
+                                    
+            # ⏺ 为什么要发送两次？                                                                    
+                                                                                                    
+            #   这是事件通知的标准模式：先发送内容，再发送结束信号。
+                
             if contains_keyword:
                 preset_response = review_config["inputs_config"]["preset_response"]
                 self.agent_queue_manager.publish(state["task_id"], AgentThought(
@@ -129,11 +107,18 @@ class FunctionCallAgent(BaseAgent):
         return {"messages": []}
 
     def _long_term_memory_recall_node(self, state: AgentState) -> AgentState:
-        """长期记忆召回节点"""
-        # 1.根据传递的智能体配置判断是否需要召回长期记忆
+        """长期记忆召回节点
+
+        注意：长期记忆在调用 stream() 之前就已经在外部查找好了（见 app_service.py），
+        这里只是从 state 中取出已经查找好的长期记忆，然后放入消息列表发送给 LLM。
+        """
+        # 1.从 state 中获取已经查找好的长期记忆（注意：不是在这里查找的）
+        # long_term_memory 是在 app_service.py 中通过 debug_conversation.summary 获取的
         long_term_memory = ""
         if self.agent_config.enable_long_term_memory:
+            # 这里只是取出，不是查找
             long_term_memory = state["long_term_memory"]
+            # 发布长期记忆召回事件，通知前端
             self.agent_queue_manager.publish(state["task_id"], AgentThought(
                 id=uuid.uuid4(),
                 task_id=state["task_id"],
@@ -141,7 +126,8 @@ class FunctionCallAgent(BaseAgent):
                 observation=long_term_memory,
             ))
 
-        # 2.构建预设消息列表，并将preset_prompt+long_term_memory填充到系统消息中
+        # 2.构建预设消息列表，将 preset_prompt + 长期记忆 填充到系统消息中
+        # 这样 LLM 就能知道之前的对话摘要和用户偏好等信息
         preset_messages = [
             SystemMessage(AGENT_SYSTEM_PROMPT_TEMPLATE.format(
                 preset_prompt=self.agent_config.preset_prompt,
@@ -150,37 +136,26 @@ class FunctionCallAgent(BaseAgent):
         ]
 
         # 3.将短期历史消息添加到消息列表中
+        # 短期记忆也是在外部查找好的，通过 token_buffer_memory.get_history_prompt_messages() 获取
         history = state["history"]
         if isinstance(history, list) and len(history) > 0:
-            # 4.校验历史消息是不是复数形式，也就是[人类消息, AI消息, 人类消息, AI消息, ...]
+            # 4.校验历史消息格式：必须是[人类消息, AI消息, 人类消息, AI消息, ...] 成对出现
             if len(history) % 2 != 0:
                 self.agent_queue_manager.publish_error(state["task_id"], "智能体历史消息列表格式错误")
                 logging.exception(
                     f"智能体历史消息列表格式错误, len(history)={len(history)}, history={json.dumps(messages_to_dict(history))}"
                 )
                 raise FailException("智能体历史消息列表格式错误")
-            # 5.拼接历史消息
+            # 5.拼接历史消息到预设消息列表
             preset_messages.extend(history)
 
         # 6.拼接当前用户的提问信息
         human_message = state["messages"][-1]
         preset_messages.append(HumanMessage(human_message.content))
 
-        # 7.处理预设消息，将预设消息添加到用户消息前，先去删除用户的原始消息，然后补充一个新的代替
-                # 最终 messages 状态
-        # python
-        # state["messages"] = [
-        #     # 保留的历史消息（没有变化）
-        #     HumanMessage(id="msg1", content="帮我写个Python函数"),
-        #     AIMessage(id="msg2", content="好的，请问是什么函数？"),
-            
-        #     # 新追加的消息（替换了原来的 msg3）
-        #     SystemMessage(content="你是AI助手，预设提示：用中文回答，长期记忆：用户喜欢简洁代码"),
-        #     HumanMessage(content="帮我写个Python函数"),      # 重复了 msg1
-        #     AIMessage(content="好的，请问是什么函数？"),      # 重复了 msg2
-        #     HumanMessage(content="计算斐波那契数列")          # 原 msg3 的内容，但这是新对象
-        # ]
-        
+        # 7.返回更新后的消息列表
+        # 最终结构：[SystemMessage(预设提示词+长期记忆), 历史消息..., 当前用户提问]
+        # 使用 RemoveMessage 删除原始用户消息，然后用新构建的 preset_messages 替换
         return {
             "messages": [RemoveMessage(id=human_message.id), *preset_messages],
         }
@@ -215,9 +190,6 @@ class FunctionCallAgent(BaseAgent):
         llm = self.llm
 
         # 3.检测大语言模型实例是否有bind_tools方法，如果没有则不绑定，如果有还需要检测tools是否为空，不为空则绑定
-        # if (hasattr(llm, "bind_tools")           # 条件1：llm对象有 bind_tools 这个属性
-        # and callable(getattr(llm, "bind_tools"))  # 条件2：bind_tools 是一个可调用的方法
-        # and len(self.agent_config.tools) > 0):   # 条件3：工具列表不为空
         if hasattr(llm, "bind_tools") and callable(getattr(llm, "bind_tools")) and len(self.agent_config.tools) > 0:
             llm = llm.bind_tools(self.agent_config.tools)
 

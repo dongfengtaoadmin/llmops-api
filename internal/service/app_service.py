@@ -504,6 +504,7 @@ class AppService(BaseService):
             status=MessageStatus.NORMAL,
         )
 
+        print(draft_app_config,'draft_app_configdraft_app_config dft')
         # todo:5.根据传递的model_config实例化不同的LLM模型，等待多LLM接入后该处会发生变化
         llm = ChatOpenAI(
             model=draft_app_config["model_config"]["model"],
@@ -587,7 +588,8 @@ class AppService(BaseService):
 
             # 17.将数据填充到agent_thought，便于存储到数据库服务中
             if agent_thought.event != QueueEvent.PING:
-                # 18.除了agent_message数据为叠加，其他均为覆盖
+                # 采用叠加方式 —— 新数据不会直接替换旧数据，而是在原有内容基础上增加、合并、追加新内容
+                # 18.除了 agent_message 数据为叠加，其他均为覆盖
                 if agent_thought.event == QueueEvent.AGENT_MESSAGE:
                     if event_id not in agent_thoughts:
                         # 19.初始化智能体消息事件
@@ -716,6 +718,9 @@ class AppService(BaseService):
             # 2.在子线程中重新查询conversation以及message，确保对象会被子线程的会话管理到
             conversation = self.get(Conversation, conversation_id)
             message = self.get(Message, message_id)
+
+
+            print(agent_thoughts,'agent_thoughtsagent_thoughts dft')
 
             # 3.循环遍历所有的智能体推理过程执行存储操作
             for key, item in agent_thoughts.items():

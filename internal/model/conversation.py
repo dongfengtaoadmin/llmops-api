@@ -16,7 +16,7 @@ from sqlalchemy import (
     Numeric,
     Float,
     text,
-    PrimaryKeyConstraint,
+    PrimaryKeyConstraint, func, asc,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -48,6 +48,15 @@ class Conversation(db.Model):
         server_onupdate=text('CURRENT_TIMESTAMP(0)'),
     )
     created_at = Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP(0)'))
+
+    @property
+    def is_new(self) -> bool:
+        """只读属性，用于判断该会话是否是第一次创建"""
+        message_count = db.session.query(func.count(Message.id)).filter(
+            Message.conversation_id == self.id,
+        ).scalar()
+
+        return False if message_count > 1 else True
 
 
 class Message(db.Model):
@@ -99,9 +108,16 @@ class Message(db.Model):
     )
     created_at = Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP(0)'))
 
+    @property
+    def agent_thoughts(self) -> list["MessageAgentThought"]:
+        """只读属性，返回该消息对应的智能体推理过程列表"""
+        return db.session.query(MessageAgentThought).filter(
+            MessageAgentThought.message_id == self.id,
+        ).order_by(asc("position")).all()
+
 
 class MessageAgentThought(db.Model):
-    """智能体消息推理模型，用于记录Agent生成最终消息答案时 消息的下级"""
+    """智能体消息推理模型，用于记录Agent生成最终消息答案时"""
     __tablename__ = "message_agent_thought"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_message_agent_thought_id"),

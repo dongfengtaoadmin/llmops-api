@@ -126,6 +126,15 @@ class AgentQueueManager:
         # 2.检测队列是否存在，如果不存在则创建队列，并添加缓存键标识
         if not q:
             # 3.添加缓存键标识
+            # 判断逻辑：
+
+            # 检查 invoke_from 是否是 WEB_APP 或 DEBUGGER
+
+            # 如果是 → user_prefix = "account"
+
+            # 如果不是 → user_prefix = "end-user"
+            # 中文翻译	账户用户	最终用户/终端用户
+            # 认证方式	用户名/密码、SSO	API Key、Token
             user_prefix = "account" if self.invoke_from in [InvokeFrom.WEB_APP, InvokeFrom.DEBUGGER] else "end-user"
 
             # 4.设置任务对应的缓存键，代表这次任务已经开始了
