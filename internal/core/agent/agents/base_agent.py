@@ -258,6 +258,8 @@ class BaseAgent(Serializable, Runnable):
         input["task_id"] = input.get("task_id", uuid.uuid4())
         input["history"] = input.get("history", [])
         input["iteration_count"] = input.get("iteration_count", 0)
+        # 确保 long_term_memory 字段被正确初始化（LangGraph 的 MessagesState 可能会忽略未初始化的字段）
+        input["long_term_memory"] = input.get("long_term_memory", "")
 
         # 3.创建子线程并执行
         thread = Thread(

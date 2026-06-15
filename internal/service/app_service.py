@@ -766,6 +766,9 @@ class AppService(BaseService):
                     )
 
                     # 9.检测是否开启长期记忆
+                    #   │ 开启长期记忆   │ ✅ 更新      │ 摘要会被使用，需要保持最新            │
+                    #   ├────────────────┼──────────────┼───────────────────────────────────────┤
+                    #   │ 未开启长期记忆 │ ❌ 不更新    │ 摘要不会被使用，省掉摘要 API 调用成本 │
                     if draft_app_config["long_term_memory"]["enable"]:
                         new_summary = self.conversation_service.summary(
                             message.query,
