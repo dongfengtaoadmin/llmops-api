@@ -211,6 +211,19 @@ class BaseAgent(Serializable, Runnable):
         agent_result.agent_thoughts = [agent_thought for agent_thought in agent_thoughts.values()]
 
         # 12.完善message
+
+        #   等价写法理解                                                                                                       
+                                                                                                                        
+        #   # 用 next() 的写法（简洁）         next() 就是把上面这个循环逻辑浓缩成一行代码。                                                                                    
+        #   message = next((t.message for t in thoughts if t.event == QueueEvent.AGENT_MESSAGE), [])                           
+                                                                                                                            
+        #   # 等价的传统写法                                                                                                   
+        #   message = []                                                                                                       
+        #   for t in thoughts:                                                                                                 
+        #       if t.event == QueueEvent.AGENT_MESSAGE:                                                                        
+        #           message = t.message                                                                                        
+        #           break  
+
         agent_result.message = next(
             (agent_thought.message for agent_thought in agent_thoughts.values()
              if agent_thought.event == QueueEvent.AGENT_MESSAGE),

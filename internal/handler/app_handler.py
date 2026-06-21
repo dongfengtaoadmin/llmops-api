@@ -7,7 +7,7 @@
 """
 from dataclasses import dataclass
 from uuid import UUID
-
+from uuid import uuid4     
 from flask import request
 from flask_login import login_required, current_user
 from injector import inject
@@ -176,21 +176,40 @@ class AppHandler:
     
     @login_required
     def ping(self):
-        from flask import current_app
-        from internal.entity.dataset_entity import RetrievalStrategy, RetrievalSource
-        dataset_retrieval = self.retrieval_service.create_langchain_tool_from_search(
-            flask_app=current_app._get_current_object(),
-            dataset_ids=["1b77b06e-766b-4ff0-8363-8ad15eb8d6b4", "b49a9443-0b9b-4eca-b3d9-02388ae84ca3"],
-            account_id=current_user.id,
-            retrieval_strategy=RetrievalStrategy.SEMANTIC,
-            k=10,
-            score=0.5,
-            retrival_source=RetrievalSource.DEBUGGER,
+        # from flask import current_app
+        # from internal.entity.dataset_entity import RetrievalStrategy, RetrievalSource
+        # dataset_retrieval = self.retrieval_service.create_langchain_tool_from_search(
+        #     flask_app=current_app._get_current_object(),
+        #     dataset_ids=["1b77b06e-766b-4ff0-8363-8ad15eb8d6b4", "b49a9443-0b9b-4eca-b3d9-02388ae84ca3"],
+        #     account_id=current_user.id,
+        #     retrieval_strategy=RetrievalStrategy.SEMANTIC,
+        #     k=10,
+        #     score=0.5,
+        #     retrival_source=RetrievalSource.DEBUGGER,
+        # )
+        # print(f"工具名称:", dataset_retrieval.name)
+        # print(f"工具描述:", dataset_retrieval.description)
+        # print(f"工具参数:", dataset_retrieval.args)
+
+        # content = dataset_retrieval.invoke({"query": "能简单介绍下什么是LLMOps么"})
+
+        # return success_json({"content": content})
+
+
+        from internal.core.agent.agents import FunctionCallAgent
+        from internal.core.agent.entities.agent_entity import AgentConfig
+        from langchain_openai import ChatOpenAI
+        from langchain_core.messages import HumanMessage
+        from internal.core.tools.builtin_tools.providers.google import google_serper
+  
+        agent = FunctionCallAgent(
+            llm=ChatOpenAI(model="gpt-4o-mini"),
+            agent_config=AgentConfig(
+                user_id=uuid4(),
+                tools=[google_serper()],
+            )
         )
-        print(f"工具名称:", dataset_retrieval.name)
-        print(f"工具描述:", dataset_retrieval.description)
-        print(f"工具参数:", dataset_retrieval.args)
 
-        content = dataset_retrieval.invoke({"query": "能简单介绍下什么是LLMOps么"})
+        agent_result = agent.invoke({"messages": [HumanMessage("帮我搜索下2024年北京半程马拉松的前3名成绩是多少")]})
 
-        return success_json({"content": content})
+        return success_json({"agent_result": agent_result.model_dump()})

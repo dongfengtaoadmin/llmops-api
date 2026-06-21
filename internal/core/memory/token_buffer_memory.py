@@ -16,7 +16,6 @@ from internal.model import Conversation, Message
 from pkg.sqlalchemy import SQLAlchemy
 
 
-# 获取短期记忆
 @dataclass
 class TokenBufferMemory:
     """基于token计数的缓冲记忆组件"""
@@ -39,7 +38,7 @@ class TokenBufferMemory:
             Message.conversation_id == self.conversation.id,
             Message.answer != "",
             Message.is_deleted == False,
-            Message.status == MessageStatus.NORMAL,
+            Message.status.in_([MessageStatus.NORMAL, MessageStatus.STOP, MessageStatus.TIMEOUT]),
         ).order_by(desc("created_at")).limit(message_limit).all()
         messages = list(reversed(messages))
 
@@ -68,8 +67,10 @@ class TokenBufferMemory:
         return trim_messages(
             messages=prompt_messages,
             max_tokens=max_token_limit,
-            token_counter=self.model_instance, # 传入了 LLM 实例，会调用其 get_num_tokens_from_messages() 方法
-            strategy="last", #裁剪策略，"last" 表示保留最新的消息，丢弃旧消息
+            token_counter=self.model_instance,
+            strategy="last",
+            start_on="human",
+            end_on="ai",
         )
 
     def get_history_prompt_text(
