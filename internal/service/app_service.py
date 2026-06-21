@@ -6,6 +6,7 @@
 @File    : app_service.py
 """
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from threading import Thread
@@ -490,7 +491,6 @@ class AppService(BaseService):
 
         # 2.获取应用的最新草稿配置信息
         draft_app_config = self.get_draft_app_config(app_id, account)
-
         # 3.获取当前应用的调试会话信息
         debug_conversation = app.debug_conversation
 
@@ -503,8 +503,16 @@ class AppService(BaseService):
             query=query,
             status=MessageStatus.NORMAL,
         )
+        logging.info(
+            "debug_chat_start, app_id=%s, conversation_id=%s, message_id=%s, tools=%s, datasets=%s, query=%s",
+            app_id,
+            debug_conversation.id,
+            message.id,
+            [tool["tool"]["name"] for tool in draft_app_config["tools"]],
+            [dataset["id"] for dataset in draft_app_config["datasets"]],
+            query,
+        )
 
-        print(draft_app_config,'draft_app_configdraft_app_config dft')
         # todo:5.根据传递的model_config实例化不同的LLM模型，等待多LLM接入后该处会发生变化
         llm = ChatOpenAI(
             model=draft_app_config["model_config"]["model"],
@@ -533,25 +541,36 @@ class AppService(BaseService):
                 )
                 if not builtin_tool:
                     continue
-                tools.append(builtin_tool(**tool["tool"]["params"]))
+                try:
+                    tools.append(builtin_tool(**tool["tool"]["params"]))
+                except Exception as e:
+                    error_message = f"内置工具 {tool['tool']['name']} 初始化失败: {str(e)}"
+                    logging.exception(error_message)
+                    continue
             else:
                 # 10.API工具，首先根据id找到ApiTool记录，然后创建示例
                 api_tool = self.get(ApiTool, tool["tool"]["id"])
                 if not api_tool:
                     continue
-                tools.append(
-                    self.api_provider_manager.get_tool(
-                        ToolEntity(
-                            id=str(api_tool.id),
-                            name=api_tool.name,
-                            url=api_tool.url,
-                            method=api_tool.method,
-                            description=api_tool.description,
-                            headers=api_tool.provider.headers,
-                            parameters=api_tool.parameters,
+                try:
+                    tools.append(
+                        self.api_provider_manager.get_tool(
+                            ToolEntity(
+                                id=str(api_tool.id),
+                                name=api_tool.name,
+                                url=api_tool.url,
+                                method=api_tool.method,
+                                description=api_tool.description,
+                                headers=api_tool.provider.headers,
+                                parameters=api_tool.parameters,
+                            )
                         )
                     )
-                )
+                except Exception as e:
+                    error_message = f"API工具 {tool['tool']['name']} 初始化失败: {str(e)}"
+                    logging.exception(error_message)
+                    continue
+
 
         # 11.检测是否关联了知识库
         if draft_app_config["datasets"]:
@@ -565,12 +584,20 @@ class AppService(BaseService):
             )
             tools.append(dataset_retrieval)
 
+        logging.info(
+            "debug_chat_tools_ready, app_id=%s, message_id=%s, langchain_tools=%s",
+            app_id,
+            message.id,
+            [tool.name for tool in tools],
+        )
+
         # todo:13.构建Agent智能体，目前暂时使用FunctionCallAgent
         agent = FunctionCallAgent(
             llm=llm,
             agent_config=AgentConfig(
                 user_id=account.id,
                 invoke_from=InvokeFrom.DEBUGGER,
+                preset_prompt=draft_app_config["preset_prompt"],
                 enable_long_term_memory=draft_app_config["long_term_memory"]["enable"],
                 tools=tools,
                 review_config=draft_app_config["review_config"],
@@ -718,9 +745,6 @@ class AppService(BaseService):
             # 2.在子线程中重新查询conversation以及message，确保对象会被子线程的会话管理到
             conversation = self.get(Conversation, conversation_id)
             message = self.get(Message, message_id)
-
-
-            print(agent_thoughts,'agent_thoughtsagent_thoughts dft')
 
             # 3.循环遍历所有的智能体推理过程执行存储操作
             for key, item in agent_thoughts.items():

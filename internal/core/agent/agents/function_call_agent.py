@@ -33,6 +33,15 @@ from .base_agent import BaseAgent
 #   LangGraph 的 StateGraph 会维护一个全局共享的状态对象，所有节点访问的是同一个 AgentState
 #   实例。 
 
+
+SEARCH_TOOL_NAMES = ("duckduckgo_search", "google_serper")
+SEARCH_TRIGGER_PATTERN = re.compile(
+    r"(搜索|查询|查一下|查找|联网|最新|实时|新闻|赛事|赛果|成绩|排名|冠军|记录|官网|网页|资料|"
+    r"search|latest|news|result|score|ranking|winner|\b20\d{2,3}\b)",
+    re.IGNORECASE,
+)
+logger = logging.getLogger(__name__)
+
 class FunctionCallAgent(BaseAgent):
     """基于函数/工具调用的智能体"""
 
@@ -163,7 +172,7 @@ class FunctionCallAgent(BaseAgent):
     def _llm_node(self, state: AgentState) -> AgentState:
         """大语言模型节点"""
         # 1.检测当前Agent迭代次数是否符合需求
-        if state["iteration_count"] > self.agent_config.max_iteration_count:
+        if state["iteration_count"] >= self.agent_config.max_iteration_count:
             self.agent_queue_manager.publish(
                 state["task_id"],
                 AgentThought(
@@ -188,17 +197,78 @@ class FunctionCallAgent(BaseAgent):
         id = uuid.uuid4()
         start_at = time.perf_counter()
         llm = self.llm
+        messages_for_llm = state["messages"]
+        search_tool_name = self._select_search_tool_name(state)
+        if search_tool_name:
+            tool_call = {
+                "name": search_tool_name,
+                "args": {"query": self._get_last_human_query(state)},
+                "id": f"call_{uuid.uuid4().hex}",
+                "type": "tool_call",
+            }
+            logger.info(
+                "agent_direct_search_tool_call, task_id=%s, iteration=%s, tool_call=%s",
+                state["task_id"],
+                state["iteration_count"],
+                tool_call,
+            )
+            self.agent_queue_manager.publish(state["task_id"], AgentThought(
+                id=id,
+                task_id=state["task_id"],
+                event=QueueEvent.AGENT_THOUGHT,
+                thought=json.dumps([tool_call]),
+                message=messages_to_dict(state["messages"]),
+                latency=(time.perf_counter() - start_at),
+            ))
+            return {
+                "messages": [AIMessage(content="", tool_calls=[tool_call])],
+                "iteration_count": state["iteration_count"] + 1,
+            }
 
         # 3.检测大语言模型实例是否有bind_tools方法，如果没有则不绑定，如果有还需要检测tools是否为空，不为空则绑定
         if hasattr(llm, "bind_tools") and callable(getattr(llm, "bind_tools")) and len(self.agent_config.tools) > 0:
-            llm = llm.bind_tools(self.agent_config.tools)
+            if self._has_search_tool_result(state):
+                logger.info(
+                    "agent_llm_bind_tools skipped after search result, task_id=%s, iteration=%s",
+                    state["task_id"],
+                    state["iteration_count"],
+                )
+                messages_for_llm = [
+                    *state["messages"],
+                    HumanMessage(
+                        content=(
+                            "请只基于本轮上方搜索工具结果回答用户原问题，提炼确定事实。"
+                            "不要使用历史对话或长期记忆中的旧结论覆盖当前工具结果；"
+                            "不要分析工具调用过程，不要建议重新搜索；"
+                            "只有当工具结果明确报错或为空时，才说明无法获取。"
+                        )
+                    ),
+                ]
+            elif search_tool_name:
+                search_tools = [tool for tool in self.agent_config.tools if tool.name == search_tool_name]
+                logger.info(
+                    "agent_llm_bind_tools force search, task_id=%s, iteration=%s, tool=%s, tools=%s",
+                    state["task_id"],
+                    state["iteration_count"],
+                    search_tool_name,
+                    [tool.name for tool in search_tools],
+                )
+                llm = llm.bind_tools(search_tools, tool_choice=search_tool_name)
+            else:
+                logger.info(
+                    "agent_llm_bind_tools auto, task_id=%s, iteration=%s, tools=%s",
+                    state["task_id"],
+                    state["iteration_count"],
+                    [tool.name for tool in self.agent_config.tools],
+                )
+                llm = llm.bind_tools(self.agent_config.tools)
 
         # 4.流式调用LLM输出对应内容
         gathered = None
         is_first_chunk = True
         generation_type = ""
         try:
-            for chunk in llm.stream(state["messages"]):
+            for chunk in llm.stream(messages_for_llm):
                 if is_first_chunk:
                     gathered = chunk
                     is_first_chunk = False
@@ -206,17 +276,18 @@ class FunctionCallAgent(BaseAgent):
                     gathered += chunk
 
                 # 5.检测生成类型是工具参数还是文本生成
-                if not generation_type:
-                    if chunk.tool_calls:
-                        generation_type = "thought"
-                    elif chunk.content:
-                        generation_type = "message"
+                if chunk.tool_calls or getattr(chunk, "tool_call_chunks", None):
+                    generation_type = "thought"
+                elif not generation_type and chunk.content:
+                    generation_type = "message"
 
                 # 6.如果生成的是消息则提交智能体消息事件
                 if generation_type == "message":
                     # 7.提取片段内容并检测是否开启输出审核
                     review_config = self.agent_config.review_config
                     content = chunk.content
+                    if not content:
+                        continue
                     if review_config["enable"] and review_config["outputs_config"]["enable"]:
                         for keyword in review_config["keywords"]:
                             content = re.sub(re.escape(keyword), "**", content, flags=re.IGNORECASE)
@@ -235,8 +306,17 @@ class FunctionCallAgent(BaseAgent):
             self.agent_queue_manager.publish_error(state["task_id"], f"LLM节点发生错误, 错误信息: {str(e)}")
             raise e
 
+        if gathered and getattr(gathered, "tool_calls", None):
+            generation_type = "thought"
+
         # 6.如果类型为推理则添加智能体推理事件
         if generation_type == "thought":
+            logger.info(
+                "agent_llm_tool_calls, task_id=%s, iteration=%s, tool_calls=%s",
+                state["task_id"],
+                state["iteration_count"],
+                gathered.tool_calls,
+            )
             self.agent_queue_manager.publish(state["task_id"], AgentThought(
                 id=id,
                 task_id=state["task_id"],
@@ -255,6 +335,67 @@ class FunctionCallAgent(BaseAgent):
 
         return {"messages": [gathered], "iteration_count": state["iteration_count"] + 1}
 
+    def _select_search_tool_name(self, state: AgentState) -> str:
+        """根据用户问题判断是否需要强制优先调用搜索工具"""
+        if state["iteration_count"] > 0:
+            return ""
+
+        search_tool_name = next(
+            (tool.name for tool in self.agent_config.tools if tool.name in SEARCH_TOOL_NAMES),
+            "",
+        )
+        if not search_tool_name:
+            return ""
+
+        human_query = self._get_last_human_query(state)
+
+        if not human_query:
+            return ""
+
+        return search_tool_name if self._should_force_search(human_query) else ""
+
+    def _should_force_search(self, query: str) -> bool:
+        """判断当前问题是否需要优先调用搜索工具"""
+        if not query:
+            return False
+
+        has_search_tool = any(tool.name in SEARCH_TOOL_NAMES for tool in self.agent_config.tools)
+        return has_search_tool and bool(SEARCH_TRIGGER_PATTERN.search(query))
+
+    @staticmethod
+    def _has_search_tool_result(state: AgentState) -> bool:
+        """检测当前消息中是否已经有搜索工具结果，有则下一轮直接生成答案"""
+        return any(
+            getattr(message, "type", "") == "tool"
+            and getattr(message, "name", "") in SEARCH_TOOL_NAMES
+            for message in state["messages"]
+        )
+
+    @staticmethod
+    def _get_last_human_query(state: AgentState) -> str:
+        """获取当前轮最后一条用户问题"""
+        for message in reversed(state["messages"]):
+            if getattr(message, "type", "") == "human":
+                content = message.content
+                return content if isinstance(content, str) else str(content)
+        return ""
+
+    def _normalize_tool_args(self, state: AgentState, tool_name: str, tool_args: dict) -> dict:
+        """修正模型生成的工具参数，避免搜索工具因空参数失败"""
+        normalized_args = dict(tool_args or {})
+        if tool_name in SEARCH_TOOL_NAMES and not normalized_args.get("query"):
+            fallback_query = self._get_last_human_query(state)
+            if fallback_query:
+                normalized_args["query"] = fallback_query
+                logger.warning(
+                    "agent_tool_args_fixed, task_id=%s, iteration=%s, tool=%s, fixed_args=%s",
+                    state["task_id"],
+                    state["iteration_count"],
+                    tool_name,
+                    normalized_args,
+                )
+        return normalized_args
+
     def _tools_node(self, state: AgentState) -> AgentState:
         """工具执行节点"""
         # 1.将工具列表转换成字典，便于调用指定的工具
@@ -269,19 +410,44 @@ class FunctionCallAgent(BaseAgent):
             # 4.创建智能体动作事件id并记录开始时间
             id = uuid.uuid4()
             start_at = time.perf_counter()
+            tool_args = self._normalize_tool_args(state, tool_call["name"], tool_call["args"])
 
             try:
                 # 5.获取工具并调用工具
                 tool = tools_by_name[tool_call["name"]]
-                tool_result = tool.invoke(tool_call["args"])
+                logger.info(
+                    "agent_tool_start, task_id=%s, iteration=%s, tool=%s, args=%s",
+                    state["task_id"],
+                    state["iteration_count"],
+                    tool_call["name"],
+                    tool_args,
+                )
+                tool_result = tool.invoke(tool_args)
             except Exception as e:
                 # 6.添加错误工具信息
                 tool_result = f"工具执行出错: {str(e)}"
+                logger.exception(
+                    "agent_tool_error, task_id=%s, iteration=%s, tool=%s",
+                    state["task_id"],
+                    state["iteration_count"],
+                    tool_call["name"],
+                )
+            else:
+                logger.info(
+                    "agent_tool_end, task_id=%s, iteration=%s, tool=%s, latency=%.4f, result_preview=%s",
+                    state["task_id"],
+                    state["iteration_count"],
+                    tool_call["name"],
+                    time.perf_counter() - start_at,
+                    str(tool_result)[:500],
+                )
+
+            tool_observation = json.dumps(tool_result, ensure_ascii=False)
 
             # 7.将工具消息添加到消息列表中
             messages.append(ToolMessage(
                 tool_call_id=tool_call["id"],
-                content=json.dumps(tool_result),
+                content=tool_observation,
                 name=tool_call["name"],
             ))
 
@@ -295,9 +461,9 @@ class FunctionCallAgent(BaseAgent):
                 id=id,
                 task_id=state["task_id"],
                 event=event,
-                observation=json.dumps(tool_result),
+                observation=tool_observation,
                 tool=tool_call["name"],
-                tool_input=tool_call["args"],
+                tool_input=tool_args,
                 latency=(time.perf_counter() - start_at),
             ))
 
