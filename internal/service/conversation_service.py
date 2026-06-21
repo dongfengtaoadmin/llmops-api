@@ -7,7 +7,10 @@
 """
 import logging
 from dataclasses import dataclass
+from typing import Any
+from uuid import UUID
 
+from flask import Flask
 from injector import inject
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -18,10 +21,12 @@ from internal.entity.conversation_entity import (
     CONVERSATION_NAME_TEMPLATE,
     ConversationInfo,
     SUGGESTED_QUESTIONS_TEMPLATE,
-    SuggestedQuestions,
+    SuggestedQuestions, InvokeFrom,
 )
 from pkg.sqlalchemy import SQLAlchemy
 from .base_service import BaseService
+from ..core.agent.entities.queue_entity import AgentThought, QueueEvent
+from ..model import Conversation, Message, MessageAgentThought
 
 
 @inject
@@ -60,8 +65,6 @@ class ConversationService(BaseService):
         ])
 
         # 2.构建大语言模型实例，并且将大语言模型的温度调低，降低幻觉的概率
-        # 工具调用（structured output）需要模型输出符合特定的 JSON schema 格式温度越高，模型的输出越随机，可能导致，输出格式不符合预期
-        # 这类确定性任务 就把问题调低
         llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
         structured_llm = llm.with_structured_output(ConversationInfo)
 
@@ -94,7 +97,6 @@ class ConversationService(BaseService):
         # 1.创建prompt
         prompt = ChatPromptTemplate.from_messages([
             ("system", SUGGESTED_QUESTIONS_TEMPLATE),
-            # 这里不能用 f-string 的原因是：LangChain 的 ChatPromptTemplate 使用变量占位符机制
             ("human", "{histories}")
         ])
 
@@ -105,7 +107,7 @@ class ConversationService(BaseService):
         # 3.构建链应用
         chain = prompt | structured_llm
 
-        # 4.调用链并获取建议问题列表 调用时 - 才填充具体值
+        # 4.调用链并获取建议问题列表
         suggested_questions = chain.invoke({"histories": histories})
 
         # 5.提取建议问题列表
@@ -119,3 +121,95 @@ class ConversationService(BaseService):
             questions = questions[:3]
 
         return questions
+
+    def save_agent_thoughts(
+            self,
+            flask_app: Flask,
+            account_id: UUID,
+            app_id: UUID,
+            app_config: dict[str, Any],
+            conversation_id: UUID,
+            message_id: UUID,
+            agent_thoughts: list[AgentThought],
+    ):
+        """存储智能体推理步骤消息"""
+        with flask_app.app_context():
+            # 1.定义变量存储推理位置及总耗时
+            position = 0
+            latency = 0
+
+            # 2.在子线程中重新查询conversation以及message，确保对象会被子线程的会话管理到
+            conversation = self.get(Conversation, conversation_id)
+            message = self.get(Message, message_id)
+
+            # 3.循环遍历所有的智能体推理过程执行存储操作
+            for agent_thought in agent_thoughts:
+                # 4.存储长期记忆召回、推理、消息、动作、知识库检索等步骤
+                if agent_thought.event in [
+                    QueueEvent.LONG_TERM_MEMORY_RECALL,
+                    QueueEvent.AGENT_THOUGHT,
+                    QueueEvent.AGENT_MESSAGE,
+                    QueueEvent.AGENT_ACTION,
+                    QueueEvent.DATASET_RETRIEVAL,
+                ]:
+                    # 5.更新位置及总耗时
+                    position += 1
+                    latency += agent_thought.latency
+
+                    # 6.创建智能体消息推理步骤
+                    self.create(
+                        MessageAgentThought,
+                        app_id=app_id,
+                        conversation_id=conversation.id,
+                        message_id=message.id,
+                        invoke_from=InvokeFrom.DEBUGGER,
+                        created_by=account_id,
+                        position=position,
+                        event=agent_thought.event,
+                        thought=agent_thought.thought,
+                        observation=agent_thought.observation,
+                        tool=agent_thought.tool,
+                        tool_input=agent_thought.tool_input,
+                        message=agent_thought.message,
+                        answer=agent_thought.answer,
+                        latency=agent_thought.latency,
+                    )
+
+                # 7.检测事件是否为Agent_message
+                if agent_thought.event == QueueEvent.AGENT_MESSAGE:
+                    # 8.更新消息信息
+                    self.update(
+                        message,
+                        message=agent_thought.message,
+                        answer=agent_thought.answer,
+                        latency=latency,
+                    )
+
+                    # 9.检测是否开启长期记忆
+                    if app_config["long_term_memory"]["enable"]:
+                        new_summary = self.summary(
+                            message.query,
+                            agent_thought.answer,
+                            conversation.summary
+                        )
+                        self.update(
+                            conversation,
+                            summary=new_summary,
+                        )
+
+                    # 10.处理生成新会话名称
+                    if conversation.is_new:
+                        new_conversation_name = self.generate_conversation_name(message.query)
+                        self.update(
+                            conversation,
+                            name=new_conversation_name,
+                        )
+
+                # 11.判断是否为停止或者错误，如果是则需要更新消息状态
+                if agent_thought.event in [QueueEvent.TIMEOUT, QueueEvent.STOP, QueueEvent.ERROR]:
+                    self.update(
+                        message,
+                        status=agent_thought.event,
+                        error=agent_thought.observation,
+                    )
+                    break
