@@ -6,14 +6,13 @@
 @File    : app_service.py
 """
 import json
-import logging
 from dataclasses import dataclass
 from datetime import datetime
 from threading import Thread
 from typing import Any, Generator
 from uuid import UUID
 
-from flask import request, current_app, Flask
+from flask import current_app
 from injector import inject
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
@@ -24,14 +23,13 @@ from internal.core.agent.agents import FunctionCallAgent, AgentQueueManager
 from internal.core.agent.entities.agent_entity import AgentConfig
 from internal.core.agent.entities.queue_entity import QueueEvent
 from internal.core.memory import TokenBufferMemory
-from internal.core.tools.api_tools.entities import ToolEntity
 from internal.core.tools.api_tools.providers import ApiProviderManager
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 from internal.entity.app_entity import AppStatus, AppConfigType, DEFAULT_APP_CONFIG
 from internal.entity.conversation_entity import InvokeFrom, MessageStatus
 from internal.entity.dataset_entity import RetrievalSource
 from internal.exception import NotFoundException, ForbiddenException, ValidateErrorException, FailException
-from internal.lib.helper import datetime_to_timestamp
+from internal.lib.helper import remove_fields
 from internal.model import (
     App,
     Account,
@@ -41,19 +39,20 @@ from internal.model import (
     AppConfig,
     AppDatasetJoin,
     Conversation,
-    Message, MessageAgentThought,
+    Message,
 )
 from internal.schema.app_schema import (
     CreateAppReq,
+    GetAppsWithPageReq,
     GetPublishHistoriesWithPageReq,
     GetDebugConversationMessagesWithPageReq,
 )
 from pkg.paginator import Paginator
 from pkg.sqlalchemy import SQLAlchemy
+from .app_config_service import AppConfigService
 from .base_service import BaseService
 from .conversation_service import ConversationService
 from .retrieval_service import RetrievalService
-from .app_config_service import AppConfigService
 
 
 @inject
@@ -70,7 +69,7 @@ class AppService(BaseService):
 
     def create_app(self, req: CreateAppReq, account: Account) -> App:
         """创建Agent应用服务"""
-        # 1.开启数据库自动提交上下文 创建应用的业务逻辑 - 多表关联操作 所以要单独 开启自动事务提交 
+        # 1.开启数据库自动提交上下文
         with self.db.auto_commit():
             # 2.创建应用记录，并刷新数据，从而可以拿到应用id
             app = App(
@@ -81,8 +80,7 @@ class AppService(BaseService):
                 status=AppStatus.DRAFT,
             )
             self.db.session.add(app)
-            self.db.session.flush() #此时 app.id 被填充为数据库自增的值
-
+            self.db.session.flush()
 
             # 3.添加草稿记录
             app_config_version = AppConfigVersion(
@@ -115,11 +113,82 @@ class AppService(BaseService):
 
         return app
 
+    def delete_app(self, app_id: UUID, account: Account) -> App:
+        """根据传递的应用id+账号，删除指定的应用信息，目前仅删除应用基础信息即可"""
+        app = self.get_app(app_id, account)
+        self.delete(app)
+        return app
+
+    def update_app(self, app_id: UUID, account: Account, **kwargs) -> App:
+        """根据传递的应用id+账号+信息，更新指定的应用"""
+        app = self.get_app(app_id, account)
+        self.update(app, **kwargs)
+        return app
+
+    def copy_app(self, app_id: UUID, account: Account) -> App:
+        """根据传递的应用id，拷贝Agent相关信息并创建一个新Agent"""
+        # 1.获取App+草稿配置，并校验权限
+        app = self.get_app(app_id, account)
+        draft_app_config = app.draft_app_config
+
+        # 2.将数据转换为字典并剔除无用数据
+        app_dict = app.__dict__.copy()
+        draft_app_config_dict = draft_app_config.__dict__.copy()
+
+        # 3.剔除无用字段
+        app_remove_fields = [
+            "id", "app_config_id", "draft_app_config_id", "debug_conversation_id",
+            "status", "updated_at", "created_at", "_sa_instance_state",
+        ]
+        draft_app_config_remove_fields = [
+            "id", "app_id", "version", "updated_at", "created_at", "_sa_instance_state",
+        ]
+        remove_fields(app_dict, app_remove_fields)
+        remove_fields(draft_app_config_dict, draft_app_config_remove_fields)
+
+        # 4.开启数据库自动提交上下文
+        with self.db.auto_commit():
+            # 5.创建一个新的应用记录
+            new_app = App(**app_dict, status=AppStatus.DRAFT)
+            self.db.session.add(new_app)
+            self.db.session.flush()
+
+            # 6.添加草稿配置
+            new_draft_app_config = AppConfigVersion(
+                **draft_app_config_dict,
+                app_id=new_app.id,
+                version=0,
+            )
+            self.db.session.add(new_draft_app_config)
+            self.db.session.flush()
+
+            # 7.更新应用的草稿配置id
+            new_app.draft_app_config_id = new_draft_app_config.id
+
+        # 8.返回创建好的新应用
+        return new_app
+
+    def get_apps_with_page(self, req: GetAppsWithPageReq, account: Account) -> tuple[list[App], Paginator]:
+        """根据传递的分页参数获取当前登录账号下的应用分页列表数据"""
+        # 1.构建分页器
+        paginator = Paginator(db=self.db, req=req)
+
+        # 2.构建筛选条件
+        filters = [App.account_id == account.id]
+        if req.search_word.data:
+            filters.append(App.name.ilike(f"%{req.search_word.data}%"))
+
+        # 3.执行分页操作
+        apps = paginator.paginate(
+            self.db.session.query(App).filter(*filters).order_by(desc("created_at"))
+        )
+
+        return apps, paginator
+
     def get_draft_app_config(self, app_id: UUID, account: Account) -> dict[str, Any]:
         """根据传递的应用id，获取指定的应用草稿配置信息"""
         app = self.get_app(app_id, account)
         return self.app_config_service.get_draft_app_config(app)
-
 
     def update_draft_app_config(
             self,
@@ -193,10 +262,11 @@ class AppService(BaseService):
             self.create(AppDatasetJoin, app_id=app_id, dataset_id=dataset["id"])
 
         # 6.获取应用草稿记录，并移除id、version、config_type、updated_at、created_at字段
-        draft_app_config_copy = app.draft_app_config.__dict__.copy() # 将 app.draft_app_config 对象转换为字典，并创建一个副本。
-        remove_fields = ["id", "version", "config_type", "updated_at", "created_at", "_sa_instance_state"]
-        for field in remove_fields:
-            draft_app_config_copy.pop(field)
+        draft_app_config_copy = app.draft_app_config.__dict__.copy()
+        remove_fields(
+            draft_app_config_copy,
+            ["id", "version", "config_type", "updated_at", "created_at", "_sa_instance_state"],
+        )
 
         # 7.获取当前最大的发布版本
         max_version = self.db.session.query(func.coalesce(func.max(AppConfigVersion.version), 0)).filter(
@@ -274,9 +344,10 @@ class AppService(BaseService):
 
         # 3.校验历史版本配置信息（剔除已删除的工具、知识库、工作流）
         draft_app_config_dict = app_config_version.__dict__.copy()
-        remove_fields = ["id", "app_id", "version", "config_type", "updated_at", "created_at", "_sa_instance_state"]
-        for field in remove_fields:
-            draft_app_config_dict.pop(field)
+        remove_fields(
+            draft_app_config_dict,
+            ["id", "app_id", "version", "config_type", "updated_at", "created_at", "_sa_instance_state"],
+        )
 
         # 4.校验历史版本配置信息
         draft_app_config_dict = self._validate_draft_app_config(draft_app_config_dict, account)
@@ -314,7 +385,7 @@ class AppService(BaseService):
         if draft_app_config["long_term_memory"]["enable"] is False:
             raise FailException("该应用并未开启长期记忆，无法获取")
 
-        # 3.更新应用长期记忆 表
+        # 3.更新应用长期记忆
         debug_conversation = app.debug_conversation
         self.update(debug_conversation, summary=summary)
 
@@ -341,6 +412,7 @@ class AppService(BaseService):
 
         # 2.获取应用的最新草稿配置信息
         draft_app_config = self.get_draft_app_config(app_id, account)
+
         # 3.获取当前应用的调试会话信息
         debug_conversation = app.debug_conversation
 
@@ -349,11 +421,12 @@ class AppService(BaseService):
             Message,
             app_id=app_id,
             conversation_id=debug_conversation.id,
+            invoke_from=InvokeFrom.DEBUGGER,
             created_by=account.id,
             query=query,
             status=MessageStatus.NORMAL,
         )
-  
+
         # todo:5.根据传递的model_config实例化不同的LLM模型，等待多LLM接入后该处会发生变化
         llm = ChatOpenAI(
             model=draft_app_config["model_config"]["model"],
@@ -373,9 +446,9 @@ class AppService(BaseService):
         # 7.将草稿配置中的tools转换成LangChain工具
         tools = self.app_config_service.get_langchain_tools_by_tools_config(draft_app_config["tools"])
 
-        # 11.检测是否关联了知识库
+        # 8.检测是否关联了知识库
         if draft_app_config["datasets"]:
-            # 12.构建LangChain知识库检索工具
+            # 9.构建LangChain知识库检索工具
             dataset_retrieval = self.retrieval_service.create_langchain_tool_from_search(
                 flask_app=current_app._get_current_object(),
                 dataset_ids=[dataset["id"] for dataset in draft_app_config["datasets"]],
@@ -385,13 +458,12 @@ class AppService(BaseService):
             )
             tools.append(dataset_retrieval)
 
-        # todo:13.构建Agent智能体，目前暂时使用FunctionCallAgent
+        # todo:10.构建Agent智能体，目前暂时使用FunctionCallAgent
         agent = FunctionCallAgent(
             llm=llm,
             agent_config=AgentConfig(
                 user_id=account.id,
                 invoke_from=InvokeFrom.DEBUGGER,
-                preset_prompt=draft_app_config["preset_prompt"],
                 enable_long_term_memory=draft_app_config["long_term_memory"]["enable"],
                 tools=tools,
                 review_config=draft_app_config["review_config"],

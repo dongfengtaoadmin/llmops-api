@@ -24,6 +24,8 @@ from internal.handler import (
     AIHandler,
     ApiKeyHandler,
     OpenAPIHandler,
+    BuiltinAppHandler,
+    WorkflowHandler,
 )
 
 
@@ -44,16 +46,23 @@ class Router:
     ai_handler: AIHandler
     api_key_handler: ApiKeyHandler
     openapi_handler: OpenAPIHandler
-    
+    builtin_app_handler: BuiltinAppHandler
+    workflow_handler: WorkflowHandler
+
     def register_router(self, app: Flask):
         """注册路由"""
         # 1.创建一个蓝图
         bp = Blueprint("llmops", __name__, url_prefix="")
         openapi_bp = Blueprint("openapi", __name__, url_prefix="")
+
         # 2.将url与对应的控制器方法做绑定
         bp.add_url_rule("/ping", view_func=self.app_handler.ping)
+        bp.add_url_rule("/apps", view_func=self.app_handler.get_apps_with_page)
         bp.add_url_rule("/apps", methods=["POST"], view_func=self.app_handler.create_app)
         bp.add_url_rule("/apps/<uuid:app_id>", view_func=self.app_handler.get_app)
+        bp.add_url_rule("/apps/<uuid:app_id>", methods=["POST"], view_func=self.app_handler.update_app)
+        bp.add_url_rule("/apps/<uuid:app_id>/delete", methods=["POST"], view_func=self.app_handler.delete_app)
+        bp.add_url_rule("/apps/<uuid:app_id>/copy", methods=["POST"], view_func=self.app_handler.copy_app)
         bp.add_url_rule("/apps/<uuid:app_id>/draft-app-config", view_func=self.app_handler.get_draft_app_config)
         bp.add_url_rule(
             "/apps/<uuid:app_id>/draft-app-config",
@@ -268,7 +277,8 @@ class Router:
         # 8.AI辅助模块
         bp.add_url_rule("/ai/optimize-prompt", methods=["POST"], view_func=self.ai_handler.optimize_prompt)
         bp.add_url_rule(
-            "/ai/suggested-questions", methods=["POST"],
+            "/ai/suggested-questions",
+            methods=["POST"],
             view_func=self.ai_handler.generate_suggested_questions,
         )
 
@@ -300,9 +310,54 @@ class Router:
             view_func=self.openapi_handler.chat,
         )
 
-        #   分开两个蓝图可以让：                                                                      
-        #   - 内部管理接口走一套认证流程（登录态）                                                  
-        #   - 对外 API 走另一套认证流程（API Key）   
+        # 10.内置应用模块
+        bp.add_url_rule("/builtin-apps/categories", view_func=self.builtin_app_handler.get_builtin_app_categories)
+        bp.add_url_rule("/builtin-apps", view_func=self.builtin_app_handler.get_builtin_apps)
+        bp.add_url_rule(
+            "/builtin-apps/add-builtin-app-to-space",
+            methods=["POST"],
+            view_func=self.builtin_app_handler.add_builtin_app_to_space,
+        )
+
+        # 11.工作流模块
+        bp.add_url_rule("/workflows", view_func=self.workflow_handler.get_workflows_with_page)
+        bp.add_url_rule("/workflows", methods=["POST"], view_func=self.workflow_handler.create_workflow)
+        bp.add_url_rule("/workflows/<uuid:workflow_id>", view_func=self.workflow_handler.get_workflow)
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>",
+            methods=["POST"],
+            view_func=self.workflow_handler.update_workflow,
+        )
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/delete",
+            methods=["POST"],
+            view_func=self.workflow_handler.delete_workflow,
+        )
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/draft-graph",
+            methods=["POST"],
+            view_func=self.workflow_handler.update_draft_graph,
+        )
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/draft-graph",
+            view_func=self.workflow_handler.get_draft_graph,
+        )
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/debug",
+            methods=["POST"],
+            view_func=self.workflow_handler.debug_workflow,
+        )
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/publish",
+            methods=["POST"],
+            view_func=self.workflow_handler.publish_workflow,
+        )
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/cancel-publish",
+            methods=["POST"],
+            view_func=self.workflow_handler.cancel_publish_workflow,
+        )
+
         # 12.在应用上注册蓝图
         app.register_blueprint(bp)
         app.register_blueprint(openapi_bp)
