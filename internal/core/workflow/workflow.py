@@ -205,10 +205,41 @@ class Workflow(BaseTool):
         #     "node_e": ["node_d"],             # target_node: "node_e", source_nodes: ["node_d"]
         # }
 
+
+        # parallel_edges = {
+        #     "dataset_retrieval_868b5769-1925-4e7b-8aa4-af7c3d444d91": ["start_18d938c4-ecd7-4a6b-9403-3625224b96cc"],
+        #     "llm_eba75e0b-21b7-46ed-8d21-791724f0740f": ["dataset_retrieval_868b5769-1925-4e7b-8aa4-af7c3d444d91"],
+        #     "code_4a9ed43d-e886-49f7-af9f-9e85d83b27aa": ["llm_eba75e0b-21b7-46ed-8d21-791724f0740f"],
+        #     "end_860c8411-37ed-4872-b53f-30afa0290211": [
+        #         "code_4a9ed43d-e886-49f7-af9f-9e85d83b27aa",
+        #         "template_transform_623b7671-0bc2-446c-bf5e-5e25032a522e",
+        #         "tool_2f6cf40d-0219-421b-92ff-229fdde15ecb",
+        #         "tool_e9fc1f95-1a59-4ba4-a87d-2ad349287234"  ← 追加
+        #     ],
+        #     "http_request_675fca50-1228-8008-82dc-0c714158534c": ["start_18d938c4-ecd7-4a6b-9403-3625224b96cc"],
+        #     "template_transform_623b7671-0bc2-446c-bf5e-5e25032a522e": ["http_request_675fca50-1228-8008-82dc-0c714158534c"],
+        #     "tool_2f6cf40d-0219-421b-92ff-229fdde15ecb": ["start_18d938c4-ecd7-4a6b-9403-3625224b96cc"],
+        #     "tool_e9fc1f95-1a59-4ba4-a87d-2ad349287234": ["start_18d938c4-ecd7-4a6b-9403-3625224b96cc"]
+        # }
+        # start_node = "start_18d938c4-ecd7-4a6b-9403-3625224b96cc"
+        # end_node = "end_860c8411-37ed-4872-b53f-30afa0290211"
+
+
         for target_node, source_nodes in parallel_edges.items():
             # 目标节点：node_c
             # 源节点：node_a, node_b
             # 添加边：graph.add_edge(source_nodes, target_node)
+            # 防止 并行节点没有同时结束，这里进行合并
+            # graph.add_edge(
+            #     [
+            #         "code_4a9ed43d-e886-49f7-af9f-9e85d83b27aa",
+            #         "template_transform_623b7671-0bc2-446c-bf5e-5e25032a522e",
+            #         "tool_2f6cf40d-0219-421b-92ff-229fdde15ecb",
+            #         "tool_e9fc1f95-1a59-4ba4-a87d-2ad349287234"
+            #     ],
+            #     "end_860c8411-37ed-4872-b53f-30afa0290211"
+            # )
+
             graph.add_edge(source_nodes, target_node)
 
         # 7.构建图程序并编译

@@ -273,10 +273,8 @@ class AppHandler:
                     }
                 ],
                 "dataset_ids": [
-                    "1cbb6449-5463-49a4-b0ef-1b94cdf747d7",
-                    "798f5324-c82e-44c2-94aa-035afbe88839",
-                    "7544c95e-e198-40f1-b1ed-6905ba5f0c55",
-                    "f3f28f75-8e60-4eba-b6df-4d1b390bbd89"
+                    "1b77b06e-766b-4ff0-8363-8ad15eb8d6b4",
+                    "b49a9443-0b9b-4eca-b3d9-02388ae84ca3"
                 ],
             },
             {
@@ -427,7 +425,19 @@ class AppHandler:
                 "type": "api_tool",
                 "provider_id": "0b83c0ed-d8ce-4241-861b-c6dd34fe27c4",
                 "tool_id": "GetCurrentWeather",
-                "inputs": []
+                "inputs": [
+                    {
+                        "name": "location",
+                        "type": "string",
+                        "value": {
+                            "type": "ref",
+                            "content": {
+                                "ref_node_id": "18d938c4-ecd7-4a6b-9403-3625224b96cc",
+                                "ref_var_name": "location"
+                            }
+                        }
+                    }
+                ]
             },
             {
                 "id": "860c8411-37ed-4872-b53f-30afa0290211",

@@ -17,10 +17,10 @@ from internal.exception import ValidateErrorException
 
 class VariableType(str, Enum):
     """变量的类型枚举"""
-    STRING = "string"
-    INT = "int"
-    FLOAT = "float"
-    BOOLEAN = "boolean"
+    STRING = "string"      # 字符串类型，用于文本数据
+    INT = "int"            # 整数类型，用于数值计算
+    FLOAT = "float"        # 浮点数类型，用于小数计算
+    BOOLEAN = "boolean"    # 布尔类型，用于逻辑判断（True/False）
 
 
 # 变量类型与声明的映射

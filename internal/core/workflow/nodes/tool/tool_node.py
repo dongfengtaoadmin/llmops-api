@@ -85,7 +85,8 @@ class ToolNode(BaseNode):
         try:
             result = self._tool.invoke(inputs_dict)
         except Exception as e:
-            raise FailException("扩展插件执行失败，请稍后尝试")
+            error_msg = str(e) if str(e) else type(e).__name__
+            raise FailException(f"扩展插件执行失败: {error_msg}")
 
         # 3.检测result是否为字符串，如果不是则转换
         if not isinstance(result, str):
