@@ -5,6 +5,12 @@
 @Author  : thezehui@gmail.com
 @File    : workflow_entity.py
 """
+
+#   Entity（实体层）的作用：
+#   - 定义纯数据结构，使用 Pydantic 的 BaseModel
+#   - 不包含业务逻辑，只做数据校验和类型定义
+#   - 用于数据传输和存储的载体
+
 import re
 from collections import defaultdict, deque
 from typing import Any, TypedDict, Annotated
@@ -17,6 +23,7 @@ from .edge_entity import BaseEdgeData
 from .node_entity import BaseNodeData, NodeResult, NodeType
 from .variable_entity import VariableEntity, VariableValueType
 
+
 # 工作流配置校验信息
 WORKFLOW_CONFIG_NAME_PATTERN = r'^[A-Za-z_][A-Za-z0-9_]*$'
 WORKFLOW_CONFIG_DESCRIPTION_MAX_LENGTH = 1024
@@ -24,6 +31,7 @@ WORKFLOW_CONFIG_DESCRIPTION_MAX_LENGTH = 1024
 
 def _process_dict(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]:
     """工作流状态字典归纳函数"""
+    # left 表示之前的数据，right 表示新的数据
     # 1.处理left和right出现空的情况
     left = left or {}
     right = right or {}
@@ -358,6 +366,15 @@ class WorkflowConfig(BaseModel):
 
 class WorkflowState(TypedDict):
     """工作流图程序状态字典"""
+    # Annotated 的作用不是改变变量的值，而是改变变量赋值的规则。你看到的  是规则通过后的结果，而规则的拦截发生在你看到它之前
+    # 设置归纳函数 系列规则（函数）：将 inputs 和 outputs 的值转换为字典，并进行合并
     inputs: Annotated[dict[str, Any], _process_dict]  # 工作流的最初始输入，也就是工具输入
     outputs: Annotated[dict[str, Any], _process_dict]  # 工作流的最终输出结果，也就是工具输出
     node_results: Annotated[list[NodeResult], _process_node_results]  # 各节点的运行结果
+
+    # 归纳函数："把一堆东西处理成一个结果"。
+    # _process_dict : 将 inputs 和 outputs 的值转换为字典，并进行合并
+
+
+#     Annotated 不仅要"是整数"，还要"大于0且小于150"
+#     age: Annotated[int, Field(gt=0, lt=150)]   

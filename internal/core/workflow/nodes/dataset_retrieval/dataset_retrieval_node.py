@@ -35,6 +35,7 @@ class DatasetRetrievalNode(BaseNode):
     ):
         """构造函数，完成知识库检索节点的初始化"""
         # 1.调用父类构造函数完成数据初始化
+        #  因为定义了私有属性所以要重写一下 __init__ 来处理私有属性
         super().__init__(*args, **kwargs)
 
         # 2.导入依赖注入及检索服务
@@ -57,7 +58,7 @@ class DatasetRetrievalNode(BaseNode):
         start_at = time.perf_counter()
         inputs_dict = extract_variables_from_state(self.node_data.inputs, state)
 
-        # 2.调用知识库检索工具
+        # 2.调用知识库检索工具   invoke 是 LangChain Runnable 协议的标准方法，BaseTool 继承自 Runnable 所以这里能使用
         combine_documents = self._retrieval_tool.invoke(inputs_dict)
 
         # 3.提取并构建输出数据结构

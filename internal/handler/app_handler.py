@@ -425,8 +425,8 @@ class AppHandler:
                 "title": "API工具",
                 "description": "",
                 "type": "api_tool",
-                "provider_id": "bde70d64-cbcc-47e7-a0f5-b51200b87c7c",
-                "tool_id": "BilibiliRs",
+                "provider_id": "0b83c0ed-d8ce-4241-861b-c6dd34fe27c4",
+                "tool_id": "GetCurrentWeather",
                 "inputs": []
             },
             {
@@ -647,7 +647,25 @@ class AppHandler:
                 "args_schema": workflow.args_schema.schema(),
             },
             "node_results": [node_result.dict() for node_result in result["node_results"]]
+            #   # 等价于普通 for 循环：                                                              
+            #     output_list = []                                                                     
+            #     for node_result in result["node_results"]:                                           
+            #         output_list.append(node_result.dict())                                           
+            #     output_list  
         })
+
+
+    # @login_required
+    # def ping(self):
+    #     from internal.core.workflow import Workflow
+    #     from internal.core.workflow.entities.workflow_entity import WorkflowConfig
+
+    #     workflow = Workflow(workflow_config=WorkflowConfig(
+    #         name="workflow",
+    #         description="工作流组件"
+    #     ))
+    #     return success_json(workflow.invoke({"query": "你好，你是？", "username": "董峰涛"}))
+        # 或者传入变量：{"query": "你好，你是？", "username": self.request.user.username}        
 
     # @login_required
     # def ping(self):

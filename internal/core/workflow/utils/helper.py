@@ -26,6 +26,27 @@ def extract_variables_from_state(variables: list[VariableEntity], state: Workflo
         # 3.获取数据变量类型
         variable_type_cls = VARIABLE_TYPE_MAP.get(variable.type)
 
+
+        #  为什么可以 variable_type_cls(...) 调用
+                                                                                    
+        #   因为 str、int、float、bool 在 Python 中都是可调用的     
+
+        #   因为 str、int、float、bool 在 Python 中都是可调用的 class，可以作为构造函数使用：
+
+        #   # 示例
+        #   variable_type_cls = str          # 拿到 str 这个 class
+        #   variable_type_cls("hello")       # 等价于 str("hello") → "hello"
+        #   variable_type_cls(123)           # 等价于 str(123) → "123"
+
+        #   variable_type_cls = int          # 拿到 int 这个 class
+        #   variable_type_cls("42")          # 等价于 int("42") → 42
+
+        #   variable_type_cls = float        # 拿到 float 这个 class
+        #   variable_type_cls("3.14")        # 等价于 float("3.14") → 3.14
+
+        #   variable_type_cls = bool         # 拿到 bool 这个 class
+        #   variable_type_cls("true")        # 等价于 bool("true") → True
+
         # 4.判断数据是引用还是直接输入
         if variable.value.type == VariableValueType.LITERAL:
             variables_dict[variable.name] = variable_type_cls(variable.value.content)

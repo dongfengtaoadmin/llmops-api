@@ -71,6 +71,15 @@ class Workflow(BaseTool):
             (node.inputs for node in workflow_config.nodes if node.node_type == NodeType.START),
             []
         )
+        
+        #  等价于
+        #  inputs = []
+        #   for node in workflow_config.nodes:
+        #       if node.node_type == NodeType.START:
+        #           inputs = node.inputs
+        #           break
+
+        #   next() 的好处是：找到第一个匹配项就立即停止，不会继续遍历，代码更简洁高效。
 
         # 2.循环遍历所有输入信息并创建字段映射
         for input in inputs:
@@ -85,6 +94,26 @@ class Workflow(BaseTool):
             )
 
         # 3.调用create_model创建一个BaseModel类，并使用上述分析好的字段
+        # create_model — 动态创建模型
+        # 运行时动态生成 BaseModel 类，不需要预先定义。
+
+        # python
+        # from langchain_core.pydantic_v1 import create_model
+
+        # # 动态创建一个模型
+        # DynamicModel = create_model(
+        #     "DynamicModel",  # 类名
+        #     name=(str, Field(description="姓名")),  # 字段名=(类型, Field配置)
+        #     age=(int, 18),  # 字段名=(类型, 默认值)
+        # )
+
+        # # 使用
+        # obj = DynamicModel(name="李四")  # age 自动取默认值 18
+        # print(obj)  # name='李四' age=18
+
+        # 根据运行时数据动态生成工具输入模型
+
+        # 在 Agent 中动态适配不同工具的入参结构
         return create_model("DynamicModel", **fields)
 
     def _build_workflow(self) -> CompiledStateGraph:
@@ -154,6 +183,7 @@ class Workflow(BaseTool):
             # 5.计算并获取并行边
             source_node = f"{edge.source_type.value}_{edge.source}"
             target_node = f"{edge.target_type.value}_{edge.target}"
+            # 这段代码是在收集并行边（多个节点同时指向同一个目标节点）
             if target_node not in parallel_edges:
                 parallel_edges[target_node] = [source_node]
             else:
@@ -166,14 +196,24 @@ class Workflow(BaseTool):
                 end_node = f"{edge.target_type.value}_{edge.target}"
 
         # 7.设置开始和终点
-        graph.set_entry_point(start_node)
-        graph.set_finish_point(end_node)
+        graph.set_entry_point(start_node) # set_entry_point(start_node) — 设置入口节点
+        graph.set_finish_point(end_node)  # set_finish_point(end_node) — 设置终点节点
 
         # 8.循环遍历合并边
+        # parallel_edges = {
+        #     "node_c": ["node_a", "node_b"],  # target_node: "node_c", source_nodes: ["node_a", "node_b"]
+        #     "node_e": ["node_d"],             # target_node: "node_e", source_nodes: ["node_d"]
+        # }
+
         for target_node, source_nodes in parallel_edges.items():
+            # 目标节点：node_c
+            # 源节点：node_a, node_b
+            # 添加边：graph.add_edge(source_nodes, target_node)
             graph.add_edge(source_nodes, target_node)
 
         # 7.构建图程序并编译
+        # compile → 生成可执行应用（像"编译代码"）
+
         return graph.compile()
 
     def _run(self, *args: Any, **kwargs: Any) -> Any:
@@ -188,3 +228,127 @@ class Workflow(BaseTool):
     ) -> Iterator[Output]:
         """工作流流式输出每个节点对应的结果"""
         return self._workflow.stream({"inputs": input})
+
+
+
+# nodes = [                                                                  
+#       # 1. 开始节点                                                          
+#       StartNodeData(                                                         
+#           id=UUID("aaa-111"),                                                
+#           node_type=NodeType.START,                                          
+#           title="开始",                                                      
+#           description="接收用户输入",                                        
+#           position={"x": 100, "y": 200},                                     
+#           inputs=[                                                           
+#               VariableEntity(name="query", type=VariableType.STRING,         
+#   value=...),                                                                
+#           ],                                                                 
+#       ),                                                                     
+                                                                             
+#       # 2. LLM翻译节点                                                       
+#       LLMNodeData(                                                           
+#           id=UUID("bbb-222"),                                                
+#           node_type=NodeType.LLM,                                            
+#           title="翻译",                                                      
+#           description="调用LLM翻译文本",                                     
+#           position={"x": 300, "y": 200},                                     
+#           inputs=[                                                           
+#               VariableEntity(                                                
+#                   name="text",                                               
+#                   type=VariableType.STRING,                                  
+#                   value=VariableEntity.Value(                                
+#                       type=VariableValueType.REF,                            
+#                       content=VariableEntity.Value.Content(                  
+#                           ref_node_id=UUID("aaa-111"),  # 引用开始节点       
+#                           ref_var_name="query",                              
+#                       )                                                      
+#                   )                                                          
+#               ),                                                             
+#           ],                                                                 
+#           outputs=[                                                          
+#               VariableEntity(name="text", type=VariableType.STRING,          
+#   value=...),                                                                
+#           ],                                                                 
+#       ),                                                                     
+                                                                           
+#       # 3. 模板转换节点                                                      
+#       TemplateTransformNodeData(
+#           id=UUID("ccc-333"),                                                
+#           node_type=NodeType.TEMPLATE_TRANSFORM,                             
+#           title="格式化输出",                                                
+#           description="将翻译结果格式化",                                    
+#           position={"x": 500, "y": 200},                                     
+#           inputs=[                                                           
+#               VariableEntity(                                                
+#                   name="translated",                                         
+#                   type=VariableType.STRING,                                  
+#                   value=VariableEntity.Value(                                
+#                       type=VariableValueType.REF,                            
+#                       content=VariableEntity.Value.Content(                  
+#                           ref_node_id=UUID("bbb-222"),  # 引用LLM节点        
+#                           ref_var_name="text",                               
+#                       )                                                      
+#                   )                                                          
+#               ),                                                             
+#           ],                                                                 
+#           outputs=[                                                        
+#               VariableEntity(name="result", type=VariableType.STRING,        
+#   value=...),                                                                
+#           ],                                                                 
+#       ),                                                                     
+                                                                           
+#       # 4. 结束节点                                                          
+#       EndNodeData(
+#           id=UUID("ddd-444"),                                                
+#           node_type=NodeType.END,                                            
+#           title="结束",                                                      
+#           description="输出最终结果",                                        
+#           position={"x": 700, "y": 200},                                     
+#           outputs=[                                                          
+#               VariableEntity(                                                
+#                   name="answer",                                             
+#                   type=VariableType.STRING,                                  
+#                   value=VariableEntity.Value(                                
+#                       type=VariableValueType.REF,                            
+#                       content=VariableEntity.Value.Content(                  
+#                           ref_node_id=UUID("ccc-333"),  # 引用模板节点       
+#                           ref_var_name="result",                             
+#                       )                                                      
+#                   )                                                          
+#               ),                                                             
+#           ],                                                                 
+#       ),                                                                   
+#   ]                                                                          
+                  
+#   edges 的结构（list[BaseEdgeData]）                                         
+                  
+#   edges = [                                                                  
+#       # 开始 → LLM翻译                                                       
+#       BaseEdgeData(                                                          
+#           id=UUID("edge-001"),                                               
+#           source=UUID("aaa-111"),          # 起点：开始节点                  
+#           source_type=NodeType.START,                                        
+#       BaseEdgeData(
+#           id=UUID("edge-001"),
+#           source=UUID("aaa-111"),          # 起点：开始节点
+#           source_type=NodeType.START,
+#           target=UUID("bbb-222"),          # 终点：LLM节点
+#           target_type=NodeType.LLM,
+#       ),
+#       # LLM翻译 → 模板转换
+#       BaseEdgeData(
+#           id=UUID("edge-002"),
+#           source=UUID("bbb-222"),          # 起点：LLM节点
+#           source_type=NodeType.LLM,
+#           target=UUID("ccc-333"),          # 终点：模板节点
+#           target_type=NodeType.TEMPLATE_TRANSFORM,
+#       ),
+#       # 模板转换 → 结束
+#       BaseEdgeData(
+#           id=UUID("edge-003"),
+#           source=UUID("ccc-333"),          # 起点：模板节点
+#           source_type=NodeType.TEMPLATE_TRANSFORM,
+#           target=UUID("ddd-444"),          # 终点：结束节点
+#           target_type=NodeType.END,
+#       ),
+#   ]

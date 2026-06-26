@@ -59,7 +59,66 @@ class VariableEntity(BaseModel):
     class Value(BaseModel):
         """变量的实体值信息"""
 
+
+        # Value(
+        #         type=VariableValueType.REF,
+        #         content=Content(
+        #             ref_node_id=node2.id,  # 动态确定引用哪个节点
+        #             ref_var_name="output"
+        #         )
+        #     )
+
+        # 场景：翻译工作流
+        # # 节点1: 用户输入节点
+        # start_node = {
+        #     "id": "start-001",
+        #     "node_type": "START",
+        #     "outputs": [
+        #         {"name": "query", "value": "Hello World"}  # 用户输入
+        #     ]
+        # }
+
+        # # 节点2: 翻译节点（引用节点1的输出）
+        # translate_node = {
+        #     "id": "llm-002",
+        #     "node_type": "LLM",
+        #     "inputs": [
+        #         {
+        #             "name": "text_to_translate",
+        #             "value": Value(
+        #                 type=VariableValueType.REF,  # 引用类型
+        #                 content=Content(
+        #                     ref_node_id="start-001",  # 引用节点1
+        #                     ref_var_name="query"      # 引用节点1的query变量
+        #                 )
+        #             )
+        #         }
+        #     ]
+        # }
+
+        # # 节点3: 输出节点（引用节点2的输出）
+        # end_node = {
+        #     "id": "end-003", 
+        #     "node_type": "END",
+        #     "inputs": [
+        #         {
+        #             "name": "result",
+        #             "value": Value(
+        #                 type=VariableValueType.REF,
+        #                 content=Content(
+        #                     ref_node_id="llm-002",     # 引用节点2
+        #                     ref_var_name="translated_text"  # 引用节点2的输出
+        #                 )
+        #             )
+        #         }
+        #     ]
+        # }
+        # 第三个节点能够用到第二个节点的输出！这正是工作流的核心机制——数据流转。
         class Content(BaseModel):
+            # 引用（REF）表示一个节点的输出被另一个节点用作输入。 保证 上下文传递 
+            # 好处 ： 
+            # 1、引用机制的核心就是通过上下文（Context）实现数据传递 
+            # 2、灵活性：节点可以引用不同节点的输出，形成复杂的数据流
             """变量内容实体信息，如果类型为引用，则使用content记录引用节点id+引用节点的变量名"""
             ref_node_id: Optional[UUID] = None
             ref_var_name: str = ""
@@ -69,6 +128,7 @@ class VariableEntity(BaseModel):
                 return ref_node_id if ref_node_id != "" else None
 
         type: VariableValueType = VariableValueType.LITERAL
+        # Union 表示联合类型，即该变量可以是括号中任意一种类型
         content: Union[Content, str, int, float, bool] = ""
 
     name: str = ""  # 变量的名字

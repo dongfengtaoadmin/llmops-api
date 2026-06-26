@@ -65,6 +65,13 @@ class CodeNode(BaseNode):
         """执行Python函数代码"""
         try:
             # 1.解析代码为AST(抽象语法树)
+            # 用字符串分析很难准确判断：
+            # "def main(params): return"  # 容易误判
+
+            # # 用AST可以精确识别：
+            # if isinstance(node, ast.FunctionDef):  # 确定是函数定义
+            #     if node.name == "main":  # 名称是main
+            #         if len(node.args.args) == 1:  # 只有一个参数
             tree = ast.parse(code)
 
             # 2.定义变量用于检查是否找到main函数
