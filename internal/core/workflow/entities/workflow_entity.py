@@ -60,28 +60,28 @@ class WorkflowConfig(BaseModel):
 
     @root_validator(pre=True)
     def validate_workflow_config(cls, values: dict[str, Any]):
-        """自定义校验函数，用于校验工作流配置中的所有参数信息"""
-        # 1.获取工作流名字name，并校验是否符合规则
+        """工作流配置"安检"函数：逐项检查配置是否合规，不合格直接报错"""
+        # 1.【安检-名字】检查工作流名字格式是否正确（只能用字母、数字、下划线，且开头必须是字母或下划线）
         name = values.get("name", None)
         if not name or not re.match(WORKFLOW_CONFIG_NAME_PATTERN, name):
             raise ValidateErrorException("工作流名字仅支持字母、数字和下划线，且以字母/下划线为开头")
 
-        # 2.校验工作流的描述信息，该描述信息是传递给LLM使用，长度不能超过1024个字符
+        # 2.【安检-描述】检查描述信息是否过长（超过1024字符就不让通过，因为要发给LLM用）
         description = values.get("description", None)
         if not description or len(description) > WORKFLOW_CONFIG_DESCRIPTION_MAX_LENGTH:
             raise ValidateErrorException("工作流描述信息长度不能超过1024个字符")
 
-        # 3.获取节点和边列表信息
+        # 3.取出节点和边列表，准备逐个安检
         nodes = values.get("nodes", [])
         edges = values.get("edges", [])
 
-        # 4.校验nodes/edges数据类型和内容不能为空
+        # 4.【安检-基础】检查节点和边列表是否存在且不为空
         if not isinstance(nodes, list) or len(nodes) <= 0:
             raise ValidateErrorException("工作流节点列表信息错误，请核实后重试")
         if not isinstance(edges, list) or len(edges) <= 0:
             raise ValidateErrorException("工作流边列表信息错误，请核实后重试")
 
-        # 5.节点数据类映射
+        # 5.准备"节点类型对照表"，根据类型名找到对应的节点数据类
         from internal.core.workflow.nodes import (
             CodeNodeData,
             DatasetRetrievalNodeData,
@@ -103,25 +103,25 @@ class WorkflowConfig(BaseModel):
             NodeType.HTTP_REQUEST: HttpRequestNodeData,
         }
 
-        # 5.循环遍历所有节点
+        # 6.【安检-节点】逐个检查节点数据是否合规
         node_data_dict: dict[UUID, BaseNodeData] = {}
         start_nodes = 0
         end_nodes = 0
         for node in nodes:
-            # 6.判断每个节点数据类型为字典
+            # 检查节点数据是否是字典格式
             if not isinstance(node, dict):
                 raise ValidateErrorException("工作流节点数据类型出错，请核实后重试")
 
-            # 7.获取节点的类型并判断类型是否存在
+            # 检查节点类型是否在对照表中存在
             node_type = node.get("node_type", "")
             node_data_cls = node_data_classes.get(node_type, None)
             if not node_data_cls:
                 raise ValidateErrorException("工作流节点类型出错，请核实后重试")
 
-            # 8.实例化节点数据，使用BaseModel规则进行校验
+            # 用对照表中的类创建节点实例（会自动触发Pydantic校验）
             node_data = node_data_cls(**node)
 
-            # 9.判断开始和结束节点是否唯一
+            # 检查开始/结束节点是否重复（只能有1个开始、1个结束）
             if node_data.node_type == NodeType.START:
                 if start_nodes >= 1:
                     raise ValidateErrorException("工作流中只允许有1个开始节点")
@@ -131,32 +131,33 @@ class WorkflowConfig(BaseModel):
                     raise ValidateErrorException("工作流中只允许有1个结束节点")
                 end_nodes += 1
 
-            # 10.判断nodes节点数据id是否唯一
+            # 检查节点ID是否重复（每个节点必须有唯一的身份证号）
             if node_data.id in node_data_dict:
                 raise ValidateErrorException("工作流节点id必须唯一，请核实后重试")
 
-            # 11.判断nodes节点数据title是否唯一
+            # 检查节点标题是否重复（每个节点的名字不能和别人相同）
             if any(item.title.strip() == node_data.title.strip() for item in node_data_dict.values()):
                 raise ValidateErrorException("工作流节点title必须唯一，请核实后重试")
 
-            # 12.将数据添加到node_data_dict中
+            # 通过安检，把节点存起来
             node_data_dict[node_data.id] = node_data
 
-        # 13.循环遍历edges数据
+        # 7.【安检-边】逐个检查连接线数据是否合规
         edge_data_dict: dict[UUID, BaseEdgeData] = {}
         for edge in edges:
-            # 14.判断边数据类型为字典
+            # 检查边数据是否是字典格式
             if not isinstance(edge, dict):
                 raise ValidateErrorException("工作流边数据类型出错，请核实后重试")
 
-            # 15.实例化边数据，使用BaseModel规则进行校验
+            # 创建边实例（会自动触发Pydantic校验）
             edge_data = BaseEdgeData(**edge)
 
-            # 16.校验边edges的id是否唯一
+            # 检查边的ID是否重复（每条连接线必须有唯一的身份证号）
             if edge_data.id in edge_data_dict:
                 raise ValidateErrorException("工作流边数据id必须唯一，请核实后重试")
 
-            # 17.校验边中的source/target/source_type/target_type必须和nodes对得上
+            # 检查边的起点和终点是否真实存在，且类型是否匹配
+            # （不能连接到不存在的节点，也不能把LLM节点说成是开始节点）
             if (
                     edge_data.source not in node_data_dict
                     or edge_data.source_type != node_data_dict[edge_data.source].node_type
@@ -165,22 +166,24 @@ class WorkflowConfig(BaseModel):
             ):
                 raise ValidateErrorException("工作流边起点/终点对应的节点不存在或类型错误，请核实后重试")
 
-            # 18.校验边Edges里的边必须唯一(source+target必须唯一)
+            # 检查是否重复连接（A→B这条线不能连两次）
             if any(
                     (item.source == edge_data.source and item.target == edge_data.target)
                     for item in edge_data_dict.values()
             ):
                 raise ValidateErrorException("工作流边数据不能重复添加")
 
-            # 19.基础数据校验通过，将数据添加到edge_data_dict中
+            # 通过安检，把边存起来
             edge_data_dict[edge_data.id] = edge_data
 
-        # 20.构建邻接表、逆邻接表、入度以及出度
+        # 8.【安检-结构】检查工作流的整体结构是否合理
+        # 构建邻接表(下游节点列表)、逆邻接表(上游节点列表)、入度(上游数量)、出度(下游数量)
         adj_list = cls._build_adj_list(edge_data_dict.values())
         reverse_adj_list = cls._build_reverse_adj_list(edge_data_dict.values())
         in_degree, out_degree = cls._build_degrees(edge_data_dict.values())
 
-        # 21.从边的关系中校验是否有唯一的开始/结束节点(入度为0即为开始，出度为0即为结束)
+        # 检查是否有且只有一个入口（入度=0）和一个出口（出度=0）
+        # 就像一条完整的流水线，必须有一个原料入口和一个成品出口
         start_nodes = [node_data for node_data in node_data_dict.values() if in_degree[node_data.id] == 0]
         end_nodes = [node_data for node_data in node_data_dict.values() if out_degree[node_data.id] == 0]
         if (
@@ -191,21 +194,22 @@ class WorkflowConfig(BaseModel):
         ):
             raise ValidateErrorException("工作流中有且只有一个开始/结束节点作为图结构的起点和终点")
 
-        # 22.获取唯一的开始节点
+        # 取出唯一的开始节点
         start_node_data = start_nodes[0]
 
-        # 23.使用edges边信息校验图的连通性，确保没有孤立的节点
+        # 检查是否存在"孤立节点"（没人连接的孤儿节点）
+        # 就像地铁线路，每个站都必须能从起点到达
         if not cls._is_connected(adj_list, start_node_data.id):
             raise ValidateErrorException("工作流中存在不可到达节点，图不联通，请核实后重试")
 
-        # 24.校验edges中是否存在环路（即循环边结构）
+        # 检查是否存在"死循环"（A→B→C→A 这种互相依赖的环）
         if cls._is_cycle(node_data_dict.values(), adj_list, in_degree):
             raise ValidateErrorException("工作流中存在环路，请核实后重试")
 
-        # 25.校验nodes+edges中的数据引用是否正确，即inputs/outputs对应的数据
+        # 检查数据引用是否正确（节点引用的数据必须来自它的上游节点）
         cls._validate_inputs_ref(node_data_dict, reverse_adj_list)
 
-        # 26.更新values值
+        # 9.全部安检通过，更新数据并返回
         values["nodes"] = list(node_data_dict.values())
         values["edges"] = list(edge_data_dict.values())
 
@@ -213,23 +217,29 @@ class WorkflowConfig(BaseModel):
 
     @classmethod
     def _is_connected(cls, adj_list: defaultdict[Any, list], start_node_id: UUID) -> bool:
-        """根据传递的邻接表+开始节点id，使用BFS广度优先搜索遍历，检查图是否流通"""
-        # 1.记录已访问的节点
+        """检查工作流是否"全线贯通"（是否存在孤立节点）
+
+        就像检查地铁线路是否完整：
+        - 从起点站出发，沿着线路走，看看能不能到达所有站点
+        - 如果有些站点怎么都走不到 → 说明是"孤儿站点" → 线路不完整
+        - 使用 BFS 广度优先搜索（一层一层往外走，不走回头路）
+        """
+        # 1.记录已经走过的站点
         visited = set()
 
-        # 2.创建双向队列，并记录开始访问节点对应的id
+        # 2.从起点站开始走
         queue = deque([start_node_id])
         visited.add(start_node_id)
 
-        # 3.循环遍历队列，广度优先搜索节点对应的子节点
+        # 3.一层一层往外走，直到走完所有能到达的站点
         while queue:
             node_id = queue.popleft()
             for neighbor in adj_list[node_id]:
                 if neighbor not in visited:
-                    visited.add(neighbor)
-                    queue.append(neighbor)
+                    visited.add(neighbor)  # 标记这个站已经走过
+                    queue.append(neighbor)  # 把这个站加入待走列表
 
-        # 4.计算已访问的节点数量是否和总结点数相等，如果不相等则表示存在孤立节点，图不流通
+        # 4.检查：走过的站点数 = 总站点数 → 全线贯通；否则 → 有孤儿站点
         return len(visited) == len(adj_list)
 
     @classmethod
@@ -239,30 +249,39 @@ class WorkflowConfig(BaseModel):
             adj_list: defaultdict[Any, list],
             in_degree: defaultdict[Any, int],
     ) -> bool:
-        """根据传递的节点列表、邻接表、入度数据，使用拓扑排序(Kahn算法)检测图中是否存在环，如果存在则返回True，不存在则返回False"""
-        # 1.存储所有入度为0的节点id，即开始节点
+        """检测工作流中是否存在"死循环"（环）
+
+        使用 Kahn 算法，就像拆积木塔：
+        1. 先拆最底层的积木（没有其他积木压着的，即入度=0的节点）
+        2. 拆掉一个积木后，它上面的积木就少了一层压力（入度-1）
+        3. 当积木的压力变成0时，也可以被拆掉了
+        4. 如果所有积木都能拆完 → 没有死循环
+        5. 如果有积木永远拆不掉 → 存在死循环（因为它们互相压着，形成环）
+
+        返回 True 表示存在环（死循环），False 表示正常
+        """
+        # 1.找到所有"底层积木"（没有上游节点的，入度=0）
         zero_in_degree_nodes = deque([node.id for node in nodes if in_degree[node.id] == 0])
 
-        # 2.记录已访问的节点数
+        # 2.记录已经拆掉的积木数量
         visited_count = 0
 
-        # 3.循环遍历入度为0的节点信息
+        # 3.循环拆积木，直到没有可拆的积木为止
         while zero_in_degree_nodes:
-            # 4.从队列左侧取出一个入度为0的节点，并记录访问+1
+            # 4.拆掉一个积木，计数+1
             node_id = zero_in_degree_nodes.popleft()
             visited_count += 1
 
-            # 5.循环遍历取到的节点的所有子节点
+            # 5.检查这个积木上面压着的其他积木
             for neighbor in adj_list[node_id]:
-                # 6.将子节点的入度-1，并判断是否为0，如果是则添加到队列中
+                # 6.上面的积木压力减少1层（入度-1）
                 in_degree[neighbor] -= 1
 
-                # 7.Kahn算法的核心是，如果存在环，那么至少有一个非结束节点的入度大于等于2，并且该入度无法消减到0
-                #   这就会导致该节点后续的所有子节点在该算法下都无法浏览，那么访问次数肯定小于总节点数
+                # 7.如果压力变成0，说明这个积木也可以拆了，加入待拆队列
                 if in_degree[neighbor] == 0:
                     zero_in_degree_nodes.append(neighbor)
 
-        # 8.判断访问次数和总结点数是否相等，如果不等/小于则说明存在环
+        # 8.最后检查：拆掉的积木数 ≠ 总积木数 → 说明有积木拆不掉 → 存在环
         return visited_count != len(nodes)
 
     @classmethod
@@ -271,41 +290,49 @@ class WorkflowConfig(BaseModel):
             node_data_dict: dict[UUID, BaseNodeData],
             reverse_adj_list: defaultdict[Any, list],
     ) -> None:
-        """校验输入数据引用是否正确，如果出错则直接抛出异常"""
-        # 1.循环遍历所有节点数据逐个处理
+        """检查节点的"数据引用"是否合规（只能引用上游节点的数据）
+
+        就像工厂流水线：
+        - 每个工位只能使用已经加工好的零件（上游节点产生的数据）
+        - 不能使用还没传过来的零件（下游节点或无关节点的数据）
+        - 如果引用了不存在的数据 → 报错
+        """
+        # 1.逐个检查每个节点的数据引用
         for node_data in node_data_dict.values():
-            # 2.提取该节点的所有前置节点
+            # 2.找出这个节点的所有"上游工位"（数据来源）
             predecessors = cls._get_predecessors(reverse_adj_list, node_data.id)
 
-            # 3.如果节点数据类型不是START则校验输入数据引用（因为开始节点不需要校验）
+            # 3.开始节点不需要检查（它是起点，没有上游）
             if node_data.node_type != NodeType.START:
-                # 4.根据节点类型从inputs或者是outputs中提取需要校验的数据
+                # 4.取出需要检查的变量列表
+                # （结束节点检查outputs，其他节点检查inputs）
                 variables: list[VariableEntity] = (
                     node_data.inputs if node_data.node_type != NodeType.END
                     else node_data.outputs
                 )
 
-                # 5.循环遍历所有需要校验的变量信息
+                # 5.检查每个变量的数据来源是否合规
                 for variable in variables:
-                    # 6.如果变量类型为引用，则需要校验
+                    # 6.如果是"引用类型"（从其他节点获取数据），则需要检查
                     if variable.value.type == VariableValueType.REF:
-                        # 7.判断前置节点是否为空，或者引用id不在前置节点内，则直接抛出错误
+                        # 7.检查：引用的数据来源必须是上游节点（不能跨过上游去拿下游的数据）
                         if (
                                 len(predecessors) <= 0
                                 or variable.value.content.ref_node_id not in predecessors
                         ):
                             raise ValidateErrorException(f"工作流节点[{node_data.title}]引用数据出错，请核实后重试")
 
-                        # 8.提取数据引用的前置节点数据
+                        # 8.找到被引用的节点
                         ref_node_data = node_data_dict.get(variable.value.content.ref_node_id)
 
-                        # 9.获取引用变量列表，如果是开始节点则从inputs中获取数据，否则从outputs中获取数据
+                        # 9.取出该节点能提供的数据列表
+                        # （开始节点提供inputs，其他节点提供outputs）
                         ref_variables = (
                             ref_node_data.inputs if ref_node_data.node_type == NodeType.START
                             else ref_node_data.outputs
                         )
 
-                        # 10.判断引用变量列表中是否存在该引用名字
+                        # 10.检查：被引用的节点真的有这个数据吗？
                         if not any(
                                 [ref_variable.name == variable.value.content.ref_var_name]
                                 for ref_variable in ref_variables
@@ -315,7 +342,11 @@ class WorkflowConfig(BaseModel):
 
     @classmethod
     def _build_adj_list(cls, edges: list[BaseEdgeData]) -> defaultdict[Any, list]:
-        """构建邻接表，邻接表的key为节点的id，值为该节点的所有直接子节点(后继节点)"""
+        """构建邻接表：记录每个节点的"下游节点列表"
+
+        简单理解：就像地铁站出口指示牌，告诉你这个站后面可以去哪些站
+        例如：A节点 → [B节点, C节点] 表示A后面连接了B和C两个节点
+        """
         adj_list = defaultdict(list)
         for edge in edges:
             adj_list[edge.source].append(edge.target)
@@ -323,7 +354,11 @@ class WorkflowConfig(BaseModel):
 
     @classmethod
     def _build_reverse_adj_list(cls, edges: list[BaseEdgeData]) -> defaultdict[Any, list]:
-        """构建逆邻接表，逆邻接表的key是每个节点的id，值为该节点的直接父节点"""
+        """构建逆邻接表：记录每个节点的"上游节点列表"
+
+        简单理解：就像地铁站入口指示牌，告诉你这个站之前是从哪些站来的
+        例如：C节点 → [A节点, B节点] 表示C之前是从A和B两个节点来的
+        """
         reverse_adj_list = defaultdict(list)
         for edge in edges:
             reverse_adj_list[edge.target].append(edge.source)
@@ -331,9 +366,15 @@ class WorkflowConfig(BaseModel):
 
     @classmethod
     def _build_degrees(cls, edges: list[BaseEdgeData]) -> tuple[defaultdict[Any, int], defaultdict[Any, int]]:
-        """根据传递的边信息，计算每个节点的入度(in_degree)和出度(out_degree)
-           in_degree: 指有多少个节点指向该节点
-           out_degree: 该节点指向多少个其他节点
+        """计算每个节点的入度和出度
+
+        入度：有多少条箭头指向我（我有多少个上游节点）
+              - 入度=0 表示没有上游节点，是起始节点
+              - 入度=2 表示有2个上游节点连接到我
+
+        出度：我有多少条箭头指向别人（我有多少个下游节点）
+              - 出度=0 表示没有下游节点，是终止节点
+              - 出度=2 表示我连接了2个下游节点
         """
         in_degree = defaultdict(int)
         out_degree = defaultdict(int)
@@ -346,16 +387,24 @@ class WorkflowConfig(BaseModel):
 
     @classmethod
     def _get_predecessors(cls, reverse_adj_list: defaultdict[Any, list], target_node_id: UUID) -> list[UUID]:
-        """根据传递的逆邻接表+目标节点id，获取该节点的所有前置节点"""
-        visited = set()
-        predecessors = []
+        """找出某个节点的所有"上游节点"（所有能传数据给它的节点）
+
+        就像追溯零件来源：
+        - 这个零件是从哪个工位来的？
+        - 那个工位的原料又是从哪来的？
+        - 一路追溯上去，找到所有参与加工的工位
+        """
+        visited = set()  # 记录已经追溯过的节点（避免重复）
+        predecessors = []  # 存放所有上游节点
 
         def dfs(node_id):
-            """使用广度搜索优先算法遍历所有的前置节点"""
+            """递归追溯：沿着数据流往上找"""
             if node_id not in visited:
                 visited.add(node_id)
+                # 不把自己算进去（目标节点本身不是自己的上游）
                 if node_id != target_node_id:
                     predecessors.append(node_id)
+                # 继续往上追溯
                 for neighbor in reverse_adj_list[node_id]:
                     dfs(neighbor)
 

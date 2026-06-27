@@ -34,6 +34,7 @@ class DatasetRetrievalNodeData(BaseNodeData):
     )
 
     @validator("outputs", pre=True)
+    # 一句话：Pydantic 自动检查类型，你写 @validator 检查业务规则。pre=True 让你的业务规则先执行，可以提前转换数据，避免类型检查报错。 防御性编程（防止用户乱传）
     def validate_outputs(cls, value: list[VariableEntity]):
         return [
             VariableEntity(name="combine_documents", value={"type": VariableValueType.GENERATED})
