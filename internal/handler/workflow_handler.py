@@ -89,6 +89,11 @@ class WorkflowHandler:
     def update_draft_graph(self, workflow_id: UUID):
         """根据传递的工作流id+请求信息更新工作流草稿图配置"""
         # 1.提取草稿图接口请求json数据
+        #   - request.get_json() - Flask 方法，用于从 HTTP 请求体中解析 JSON 数据                    
+        #   - force=True - 强制解析 JSON，即使请求头中的 Content-Type 不是 application/json        
+        #   - silent=True - 静默模式，如果 JSON                                                      
+        #   解析失败（如请求体为空、格式错误），不会抛出异常，而是返回 None                          
+                
         draft_graph_dict = request.get_json(force=True, silent=True) or {
             "nodes": [],
             "edges": [],

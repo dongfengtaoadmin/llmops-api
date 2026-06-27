@@ -174,9 +174,12 @@ class WorkflowService(BaseService):
                         continue
 
                     # 7.判断工具的params和草稿中的params是否一致，如果不一致则全部重置为默认值（或者考虑删除这个工具的引用）
+                    # param_keys = {"user_id", "username", "age"}  # 集合自动去重，
                     param_keys = set([param.name for param in tool_entity.params])
                     params = node.get("params")
+                    # - — 集合的差集运算，返回在左边集合中但不在右边集合中的元素 # 执行差集运算
                     if set(params.keys()) - param_keys:
+                        #  执行差集是为了发现草稿中过期的参数。只有当检测到草稿参数与工具定义不匹配时，才重置为默认值，避免破坏用户的有效配置。
                         params = {
                             param.name: param.default
                             for param in tool_entity.params
@@ -255,6 +258,7 @@ class WorkflowService(BaseService):
                     Dataset.id.in_(node.get("dataset_ids", [])),
                     Dataset.account_id == account.id,
                 ).all()
+                #   为什么要加 node["meta"]？    前端展示需要   
                 node["meta"] = {
                     "datasets": [{
                         "id": dataset.id,
@@ -300,6 +304,11 @@ class WorkflowService(BaseService):
             try:
                 for chunk in workflow_tool.stream(inputs):
                     # 5.chunk的格式为:{"node_name": WorkflowState}，所以需要取出节点响应结构的第1个key
+                    # SSE 数据格式示例
+                    # chunk = {"event": "start"}      # 事件类型
+                    # chunk = {"data": "..."}         # 数据内容
+                    # chunk = {"error": "..."}        # 错误信息
+                    #   first_key = "event" or data or error
                     first_key = next(iter(chunk))
 
                     # 6.取出各个节点的运行结果
@@ -417,7 +426,15 @@ class WorkflowService(BaseService):
                 if node_data_cls is None:
                     raise ValidateErrorException("工作流节点类型出错，请核实后重试")
 
-                # 6.实例化节点数据类型，如果出错则跳过当前数据
+                # 6.实例化节点数据类型，如果出错则跳过当前数据 
+                #   node = {"id": "1", "name": "开始节点", "type": "start"}                                  
+                #     - ** 是字典解包操作符，会将字典的键值对作为关键字参数传递  
+                #   # 也等价于：                                                                             
+                # node_data = StartNodeData(                                                               
+                #     id=node["id"],                                                                       
+                #     name=node["name"]                                                                    
+                # )                                                                                        
+                            
                 node_data = node_data_cls(**node)
 
                 # 7.判断节点id是否唯一，如果不唯一，则将当前节点清除

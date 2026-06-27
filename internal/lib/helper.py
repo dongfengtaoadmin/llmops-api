@@ -60,7 +60,7 @@ def remove_fields(data_dict: dict, fields: list[str]) -> None:
 
 
 def convert_model_to_dict(obj: Any, *args, **kwargs):
-    """辅助函数，将Pydantic V1版本中的UUID/Enum等数据转换成可序列化存储的数据。"""
+    """辅助函数，将Pydantic V1版本中的UUID/Enum等数据转换成可序列化存储的数据。现在这个字典里所有值都是JSON可序列化的基础类型（str、int、list、dict），可以直接用 json.dumps()"""
     # 1.如果是Pydantic的BaseModel类型，递归处理其字段
     if isinstance(obj, BaseModel):
         obj_dict = obj.dict(*args, **kwargs)

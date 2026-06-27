@@ -41,7 +41,7 @@ class LLMNode(BaseNode):
 
         # 4.使用stream来代替invoke，避免接口长时间未响应超时
         content = ""
-        for chunk in llm.stream(prompt_value):
+        for chunk in llm.stream(prompt_value):   # ← 循环会等待所有 chunk 完成
             content += chunk.content
 
         # 5.提取并构建输出数据结构
@@ -50,6 +50,35 @@ class LLMNode(BaseNode):
             outputs[self.node_data.outputs[0].name] = content
         else:
             outputs["output"] = content
+
+
+            #  这段代码并没有真正利用 stream 的流式优势：
+            # - 它仍然等待所有内容生成完毕
+            # - 然后才构建输出结构
+            # - 与 invoke 的效果几乎相同
+
+            # 真正的流式处理应该是：
+
+            # # 正确的流式处理方式：边生成边返回给用户
+            # def stream_node(self):
+            #     for chunk in llm.stream(prompt_value):
+            #         # 实时返回给用户，不等待全部完成
+            #         yield {
+            #             "node_results": [
+            #                 NodeResult(
+            #                     outputs={"output": chunk.content},
+            #                     status=NodeStatus.RUNNING,
+            #                 )
+            #             ]
+            #         }
+
+            #     # 流式结束后才返回最终状态
+            #     yield {
+            #         "node_results": [
+            #             NodeResult(status=NodeStatus.SUCCEEDED)
+            #         ]
+            #     }
+
 
         # 6.构建响应状态并返回
         return {
