@@ -5,31 +5,45 @@
 @Author  : thezehui@gmail.com
 @File    : app_service.py
 """
+import io
 import json
+import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime
-from threading import Thread
 from typing import Any, Generator
 from uuid import UUID
 
+import requests
 from flask import current_app
 from injector import inject
-from langchain_core.messages import HumanMessage
+from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from redis import Redis
 from sqlalchemy import func, desc
-
+from sqlalchemy.orm import joinedload
+from werkzeug.datastructures import FileStorage
 from internal.core.agent.agents import FunctionCallAgent, AgentQueueManager
 from internal.core.agent.entities.agent_entity import AgentConfig
 from internal.core.agent.entities.queue_entity import QueueEvent
+from internal.core.language_model import LanguageModelManager
+from internal.core.agent.agents import FunctionCallAgent, AgentQueueManager, ReACTAgent
+from internal.core.language_model.entities.model_entity import ModelParameterType, ModelFeature
 from internal.core.memory import TokenBufferMemory
 from internal.core.tools.api_tools.providers import ApiProviderManager
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+from internal.entity.ai_entity import OPTIMIZE_PROMPT_TEMPLATE
 from internal.entity.app_entity import AppStatus, AppConfigType, DEFAULT_APP_CONFIG
+from internal.entity.app_entity import GENERATE_ICON_PROMPT_TEMPLATE
+# from internal.entity.audio_entity import ALLOWED_AUDIO_VOICES
+from langchain_core.messages import  HumanMessage
 from internal.entity.conversation_entity import InvokeFrom, MessageStatus
 from internal.entity.dataset_entity import RetrievalSource
+from internal.entity.workflow_entity import WorkflowStatus
 from internal.exception import NotFoundException, ForbiddenException, ValidateErrorException, FailException
-from internal.lib.helper import remove_fields
+from internal.lib.helper import remove_fields, get_value_type, generate_random_string
 from internal.model import (
     App,
     Account,
@@ -40,19 +54,28 @@ from internal.model import (
     AppDatasetJoin,
     Conversation,
     Message,
+    Workflow,
 )
 from internal.schema.app_schema import (
     CreateAppReq,
     GetAppsWithPageReq,
     GetPublishHistoriesWithPageReq,
-    GetDebugConversationMessagesWithPageReq,
+    GetDebugConversationMessagesWithPageReq, DebugChatReq,
 )
 from pkg.paginator import Paginator
 from pkg.sqlalchemy import SQLAlchemy
 from .app_config_service import AppConfigService
 from .base_service import BaseService
 from .conversation_service import ConversationService
+from .cos_service import CosService
+from .language_model_service import LanguageModelService
 from .retrieval_service import RetrievalService
+
+
+AUTO_CREATE_APP_FALLBACK_ICON = (
+    "https://imooc-llmops-1304251364.cos.ap-guangzhou.myqcloud.com/"
+    "2024/12/06/5af57d6d-d71b-4396-9c59-89ae55145b94.png"
+)
 
 
 @inject
@@ -61,11 +84,112 @@ class AppService(BaseService):
     """应用服务逻辑"""
     db: SQLAlchemy
     redis_client: Redis
+    cos_service: CosService
     conversation_service: ConversationService
     retrieval_service: RetrievalService
     app_config_service: AppConfigService
+    language_model_service: LanguageModelService
     api_provider_manager: ApiProviderManager
     builtin_provider_manager: BuiltinProviderManager
+    language_model_manager: LanguageModelManager
+
+
+    def auto_create_app(self, name: str, description: str, account_id: UUID) -> None:
+        """根据传递的应用名称、描述、账号id利用AI创建一个Agent智能体"""
+        # 1.创建LLM，用于生成icon提示与预设提示词
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.8)
+
+        # 2.创建DallEApiWrapper包装器，图片服务可单独配置，避免和聊天模型共用额度/网关
+        dalle_api_wrapper = DallEAPIWrapper(
+            model=os.getenv("OPENAI_IMAGE_MODEL") or "dall-e-3",
+            size=os.getenv("OPENAI_IMAGE_SIZE") or "1024x1024",
+            api_key=os.getenv("OPENAI_IMAGE_API_KEY") or None,
+            base_url=os.getenv("OPENAI_IMAGE_API_BASE") or None,
+        )
+
+        # 3.构建生成icon链
+        generate_icon_chain = ChatPromptTemplate.from_template(
+            GENERATE_ICON_PROMPT_TEMPLATE
+        ) | llm | StrOutputParser() | dalle_api_wrapper.run
+
+        # 4.生成预设prompt链
+        generate_preset_prompt_chain = ChatPromptTemplate.from_messages([
+            ("system", OPTIMIZE_PROMPT_TEMPLATE),
+            ("human", "应用名称: {name}\n\n应用描述: {description}")
+        ]) | llm | StrOutputParser()
+
+        # 5.生成应用配置。icon生成依赖图片模型，失败时不能阻断应用主体创建。
+        app_config = {
+            "icon": AUTO_CREATE_APP_FALLBACK_ICON,
+            "preset_prompt": "",
+        }
+        try:
+            app_config["preset_prompt"] = generate_preset_prompt_chain.invoke({
+                "name": name,
+                "description": description,
+            })
+        except Exception:
+            logging.exception("自动创建应用时生成预设提示词失败，将使用空提示词")
+
+        try:
+            app_config["icon"] = generate_icon_chain.invoke({
+                "name": name,
+                "description": description,
+            })
+        except Exception:
+            logging.exception("自动创建应用时生成icon失败，将使用默认icon")
+
+        # app_config = {
+        #     'icon': 'https://cos.ap-guangzhou.myqcloud.com/your-bucket/icons/20240607_abc123def456.png',
+        #     'preset_prompt': '你是一位专业的法律顾问助手，拥有丰富的法律知识储备...'
+        # }
+
+        # 6.将AI生成的图片下载到本地后上传到腾讯云cos中，默认icon则直接复用已有URL
+        icon = app_config["icon"]
+        account = self.db.session.query(Account).get(account_id)
+        if icon != AUTO_CREATE_APP_FALLBACK_ICON:
+            try:
+                icon_response = requests.get(icon, timeout=10)
+                icon_response.raise_for_status()
+                upload_file = self.cos_service.upload_file(
+                    FileStorage(io.BytesIO(icon_response.content), filename="icon.png"),
+                    True,
+                    account,
+                )
+                icon = self.cos_service.get_file_url(upload_file.key)
+            except Exception:
+                logging.exception("自动创建应用时上传icon失败，将使用默认icon")
+                icon = AUTO_CREATE_APP_FALLBACK_ICON
+
+        # 7.开启数据库自动提交上下文
+        with self.db.auto_commit():
+            # 8.创建应用记录并刷新数据，从而可以拿到应用id
+            app = App(
+                account_id=account.id,
+                name=name,
+                icon=icon,
+                description=description,
+                status=AppStatus.DRAFT,
+            )
+            self.db.session.add(app)
+            self.db.session.flush()
+
+            # 9.添加草稿记录
+            app_config_version = AppConfigVersion(
+                app_id=app.id,
+                version=0,
+                config_type=AppConfigType.DRAFT,
+                **{
+                    **DEFAULT_APP_CONFIG,
+                    "preset_prompt": app_config.get("preset_prompt", ""),
+                }
+            )
+            self.db.session.add(app_config_version)
+            self.db.session.flush()
+
+            # 10.更新应用配置id
+            app.draft_app_config_id = app_config_version.id
+
 
     def create_app(self, req: CreateAppReq, account: Account) -> App:
         """创建Agent应用服务"""
@@ -426,12 +550,9 @@ class AppService(BaseService):
             query=query,
             status=MessageStatus.NORMAL,
         )
-
-        # todo:5.根据传递的model_config实例化不同的LLM模型，等待多LLM接入后该处会发生变化
-        llm = ChatOpenAI(
-            model=draft_app_config["model_config"]["model"],
-            **draft_app_config["model_config"]["parameters"],
-        )
+        
+        # 5.从语言模型管理器中加载大语言模型
+        llm = self.language_model_service.load_language_model(draft_app_config.get("model_config", {}))
 
         # 6.实例化TokenBufferMemory用于提取短期记忆
         token_buffer_memory = TokenBufferMemory(
@@ -458,18 +579,27 @@ class AppService(BaseService):
             )
             tools.append(dataset_retrieval)
 
-        # todo:10.构建Agent智能体，目前暂时使用FunctionCallAgent
-        agent = FunctionCallAgent(
+          # 10.检测是否关联工作流，如果关联了工作流则将工作流构建成工具添加到tools中
+        if draft_app_config["workflows"]:
+            workflow_tools = self.app_config_service.get_langchain_tools_by_workflow_ids(
+                [workflow["id"] for workflow in draft_app_config["workflows"]]
+            )
+            tools.extend(workflow_tools)
+
+        # 10.根据LLM是否支持tool_call决定使用不同的Agent
+        agent_class = FunctionCallAgent if ModelFeature.TOOL_CALL in llm.features else ReACTAgent
+        agent = agent_class(
             llm=llm,
             agent_config=AgentConfig(
                 user_id=account.id,
                 invoke_from=InvokeFrom.DEBUGGER,
+                preset_prompt=draft_app_config["preset_prompt"],
                 enable_long_term_memory=draft_app_config["long_term_memory"]["enable"],
                 tools=tools,
                 review_config=draft_app_config["review_config"],
             ),
         )
-
+        
         agent_thoughts = {}
         for agent_thought in agent.stream({
             "messages": [HumanMessage(query)],

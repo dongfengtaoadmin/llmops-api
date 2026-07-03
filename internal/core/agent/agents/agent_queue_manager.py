@@ -135,7 +135,10 @@ class AgentQueueManager:
             # 如果不是 → user_prefix = "end-user"
             # 中文翻译	账户用户	最终用户/终端用户
             # 认证方式	用户名/密码、SSO	API Key、Token
-            user_prefix = "account" if self.invoke_from in [InvokeFrom.WEB_APP, InvokeFrom.DEBUGGER] else "end-user"
+              # 3.添加缓存键标识
+            user_prefix = "account" if self.invoke_from in [
+                InvokeFrom.WEB_APP, InvokeFrom.DEBUGGER, InvokeFrom.ASSISTANT_AGENT,
+            ] else "end-user"
 
             # 4.设置任务对应的缓存键，代表这次任务已经开始了
             self.redis_client.setex(

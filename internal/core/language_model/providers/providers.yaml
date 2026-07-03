@@ -6,6 +6,34 @@
   supported_model_types:
     - chat
     - completion
+- name: anthropic
+  label: Claude兼容
+  description: Anthropic协议兼容模型，例如腾讯云Coding Anthropic接口的kimi-k2.5。
+  icon: icon.svg
+  background: "#F3F4F6"
+  supported_model_types:
+    - chat
+- name: coding_plan
+  label: 腾讯云Coding Plan
+  description: 腾讯云LKEAP Coding Plan提供的OpenAI兼容模型，例如glm-5、minimax-m2.5和kimi-k2.5。
+  icon: icon.svg
+  background: "#EFF6FF"
+  supported_model_types:
+    - chat
+- name: glm
+  label: GLM
+  description: Z.AI/智谱提供的GLM系列模型，例如glm-5.2和glm-5。
+  icon: icon.svg
+  background: "#EEF2FF"
+  supported_model_types:
+    - chat
+- name: minimax
+  label: MiniMax
+  description: MiniMax提供的模型，例如MiniMax-M3。
+  icon: icon.svg
+  background: "#F0FDFA"
+  supported_model_types:
+    - chat
 - name: moonshot
   label: 月之暗面
   description: Moonshot提供的模型，例如moonshot-v1-8k、moonshot-v1-32k和moonshot-v1-128k。

@@ -6,6 +6,7 @@
 @File    : app_handler.py
 """
 from dataclasses import dataclass
+import os
 from uuid import UUID
 from internal.core.language_model import LanguageModelManager
 from flask import request
@@ -721,16 +722,34 @@ class AppHandler:
 
     @login_required
     def ping(self):
-        provider = self.language_model_manager.get_provider("ollama")
-        model_entity = provider.get_model_entity("qwen2.5-7b")
+        """测试不同模型服务提供商的调用是否正常
+
+        示例：
+        - /ping 默认测试腾讯云Coding Plan里的glm-5
+        - /ping?provider=coding_plan&model=glm-5
+        - /ping?provider=coding_plan&model=minimax-m2.5
+        - /ping?provider=anthropic&model=kimi-k2.5
+        - /ping?provider=glm&model=glm-5.2 需要配置官方GLM_API_KEY
+        - /ping?provider=minimax&model=MiniMax-M3 需要配置官方MINIMAX_API_KEY
+        - /ping?provider=moonshot&model=moonshot-v1-8k 需要配置MOONSHOT_API_KEY
+        """
+        provider_name = request.args.get("provider", "coding_plan")
+        model_name = request.args.get("model", os.getenv("CODING_PLAN_MODEL", "glm-5"))
+        prompt = request.args.get("prompt", "你好，你是谁？")
+
+        provider = self.language_model_manager.get_provider(provider_name)
+        model_entity = provider.get_model_entity(model_name)
         model_class = provider.get_model_class(model_entity.model_type)
         llm = model_class(**{
             **model_entity.attributes,
+            "temperature": float(request.args.get("temperature", 0.7)),
+            "max_tokens": int(request.args.get("max_tokens", 1024)),
             "features": model_entity.features,
             "metadata": model_entity.metadata,
         })
+
         return success_json({
-            "content": llm.invoke("你好，你是").content,
-            "features": llm.features,
+            "content": llm.invoke(prompt).content,
+            "features": [feature.value for feature in llm.features],
             "metadata": llm.metadata,
         })

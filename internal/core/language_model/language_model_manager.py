@@ -81,3 +81,20 @@ class LanguageModelManager(BaseModel):
         model_entity = provider.get_model_entity(model_name)
 
         return provider.get_model_class(model_entity.model_type)
+
+    def create_model(self, model_config: dict[str, Any]) -> BaseLanguageModel:
+        """根据应用模型配置创建对应的LangChain模型实例"""
+        provider_name = model_config.get("provider", "openai")
+        model_name = model_config.get("model", "gpt-4o-mini")
+        parameters = model_config.get("parameters", {})
+
+        provider = self.get_provider(provider_name)
+        model_entity = provider.get_model_entity(model_name)
+        model_class = provider.get_model_class(model_entity.model_type)
+
+        return model_class(
+            **model_entity.attributes,
+            **parameters,
+            features=model_entity.features,
+            metadata=model_entity.metadata,
+        )
