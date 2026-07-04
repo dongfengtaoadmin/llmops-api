@@ -9,8 +9,8 @@ import uuid
 from abc import abstractmethod
 from threading import Thread
 from typing import Optional, Any, Iterator
-
-from langchain_core.language_models import BaseLanguageModel
+# 使用自己的 BaseLanguageModel 就可以使用 features 来判断是否支持 工具调研
+from internal.core.language_model.entities.model_entity import BaseLanguageModel
 from langchain_core.messages import AnyMessage
 from langchain_core.load import Serializable
 from langchain_core.pydantic_v1 import PrivateAttr

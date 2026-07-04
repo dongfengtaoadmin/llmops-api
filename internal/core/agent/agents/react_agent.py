@@ -29,7 +29,7 @@ class ReACTAgent(FunctionCallAgent):
     """基于ReACT推理的智能体，继承FunctionCallAgent，并重写long_term_memory_node和llm_node两个节点"""
 
     def _long_term_memory_recall_node(self, state: AgentState) -> AgentState:
-        """重写长期记忆召回节点，使用prompt实现工具调用及规范数据生成"""
+        """重写长期记忆召回节点，不支持的就使用使用prompt实现工具调用及规范数据生成"""
         # 1.判断是否支持工具调用，如果支持工具调用，则可以直接使用工具智能体的长期记忆召回节点
         if ModelFeature.TOOL_CALL in self.llm.features:
             return super()._long_term_memory_recall_node(state)
@@ -138,6 +138,12 @@ class ReACTAgent(FunctionCallAgent):
                 # 8.提取片段内容并校测是否开启输出审核
                 review_config = self.agent_config.review_config
                 content = chunk.content
+                # 处理结构化内容格式（某些模型返回列表格式 [{'text': '...', 'type': 'text', 'index': 0}]）
+                if isinstance(content, list):
+                    content = "".join(
+                        item.get("text", "") if isinstance(item, dict) else str(item)
+                        for item in content
+                    )
                 if review_config["enable"] and review_config["outputs_config"]["enable"]:
                     for keyword in review_config["keywords"]:
                         content = re.sub(re.escape(keyword), "**", content, flags=re.IGNORECASE)
@@ -154,9 +160,16 @@ class ReACTAgent(FunctionCallAgent):
 
             # 9.检测生成的类型是工具调用还是文本生成，同时赋值
             if not generation_type:
+                # 处理结构化内容格式（某些模型返回列表格式）
+                gathered_content = gathered.content
+                if isinstance(gathered_content, list):
+                    gathered_content = "".join(
+                        item.get("text", "") if isinstance(item, dict) else str(item)
+                        for item in gathered_content
+                    )
                 # 10.当生成内容的长度大于等于7(```json)长度时才可以判断出类型是什么
-                if len(gathered.content.strip()) >= 7:
-                    if gathered.content.strip().startswith("```json"):
+                if len(gathered_content.strip()) >= 7:
+                    if gathered_content.strip().startswith("```json"):
                         generation_type = "thought"
                     else:
                         generation_type = "message"
@@ -165,9 +178,9 @@ class ReACTAgent(FunctionCallAgent):
                             id=id,
                             task_id=state["task_id"],
                             event=QueueEvent.AGENT_MESSAGE,
-                            thought=gathered.content,
+                            thought=gathered_content,
                             message=messages_to_dict(state["messages"]),
-                            answer=gathered.content,
+                            answer=gathered_content,
                             latency=(time.perf_counter() - start_at),
                         ))
 
@@ -187,7 +200,7 @@ class ReACTAgent(FunctionCallAgent):
             try:
                 # 13.使用正则解析信息，如果失败则当成普通消息返回
                 pattern = r"^```json(.*?)```$"
-                matches = re.findall(pattern, gathered.content, re.DOTALL)
+                matches = re.findall(pattern, gathered_content, re.DOTALL)
                 match_json = json.loads(matches[0])
                 tool_calls = [{
                     "id": str(uuid.uuid4()),
@@ -225,9 +238,9 @@ class ReACTAgent(FunctionCallAgent):
                     id=id,
                     task_id=state["task_id"],
                     event=QueueEvent.AGENT_MESSAGE,
-                    thought=gathered.content,
+                    thought=gathered_content,
                     message=messages_to_dict(state["messages"]),
-                    answer=gathered.content,
+                    answer=gathered_content,
                     latency=(time.perf_counter() - start_at),
                 ))
 

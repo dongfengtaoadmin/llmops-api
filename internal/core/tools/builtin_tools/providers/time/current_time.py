@@ -6,15 +6,17 @@
 @File    : current_time.py
 """
 from datetime import datetime
-from typing import Any
+from typing import Any, Type
 
+from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.tools import BaseTool
 
 
 class CurrentTimeTool(BaseTool):
     """一个用于获取当前时间的工具"""
-    name: str = "current_time"
-    description: str = "一个用于获取当前时间的工具"
+    name = "current_time"
+    description = "一个用于获取当前时间的工具"
+    args_schema: Type[BaseModel] = BaseModel
 
     def _run(self, *args: Any, **kwargs: Any) -> Any:
         """获取当前系统的时间并进行格式化后返回"""
