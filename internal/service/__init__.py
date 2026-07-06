@@ -7,11 +7,13 @@
 """
 from .account_service import AccountService
 from .ai_service import AIService
+from .analysis_service import AnalysisService
 from .api_key_service import ApiKeyService
 from .api_tool_service import ApiToolService
 from .app_config_service import AppConfigService
 from .app_service import AppService
 from .assistant_agent_service import AssistantAgentService
+from .audio_service import AudioService
 from .base_service import BaseService
 from .builtin_app_service import BuiltinAppService
 from .builtin_tool_service import BuiltinToolService
@@ -28,11 +30,14 @@ from .keyword_table_service import KeywordTableService
 from .language_model_service import LanguageModelService
 from .oauth_service import OAuthService
 from .openapi_service import OpenAPIService
+from .platform_service import PlatformService
 from .process_rule_service import ProcessRuleService
 from .retrieval_service import RetrievalService
 from .segment_service import SegmentService
 from .upload_file_service import UploadFileService
 from .vector_database_service import VectorDatabaseService
+from .web_app_service import WebAppService
+from .wechat_service import WechatService
 from .workflow_service import WorkflowService
 
 __all__ = [
@@ -65,4 +70,9 @@ __all__ = [
     "LanguageModelService",
     "AssistantAgentService",
     "FaissService",
+    "AnalysisService",
+    "WebAppService",
+    "AudioService",
+    "PlatformService",
+    "WechatService",
 ]

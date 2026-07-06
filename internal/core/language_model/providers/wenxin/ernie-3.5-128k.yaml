@@ -29,3 +29,9 @@ parameters:
     help: 禁用模型自行进行外部搜索。
     required: false
     default: false
+metadata:
+  pricing:
+    input: 0.0008
+    output: 0.0020
+    unit: 0.001
+    currency: RMB

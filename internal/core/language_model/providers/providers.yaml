@@ -34,6 +34,13 @@
   background: "#F0FDFA"
   supported_model_types:
     - chat
+- name: deepseek
+  label: DeepSeek
+  description: DeepSeek提供的模型，例如deepseek-chat和deepseek-reasoner。
+  icon: icon.svg
+  background: "#EEF2FF"
+  supported_model_types:
+    - chat
 - name: moonshot
   label: 月之暗面
   description: Moonshot提供的模型，例如moonshot-v1-8k、moonshot-v1-32k和moonshot-v1-128k。

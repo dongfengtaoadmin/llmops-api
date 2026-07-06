@@ -617,10 +617,22 @@ class AppService(BaseService):
                         # 14.初始化智能体消息事件
                         agent_thoughts[event_id] = agent_thought
                     else:
-                        # 15.叠加智能体消息
+                         # 15.叠加智能体消息
                         agent_thoughts[event_id] = agent_thoughts[event_id].model_copy(update={
                             "thought": agent_thoughts[event_id].thought + agent_thought.thought,
+                            # 消息相关数据
+                            "message": agent_thought.message,
+                            "message_token_count": agent_thought.message_token_count,
+                            "message_unit_price": agent_thought.message_unit_price,
+                            "message_price_unit": agent_thought.message_price_unit,
+                            # 答案相关数据
                             "answer": agent_thoughts[event_id].answer + agent_thought.answer,
+                            "answer_token_count": agent_thought.answer_token_count,
+                            "answer_unit_price": agent_thought.answer_unit_price,
+                            "answer_price_unit": agent_thought.answer_price_unit,
+                            # Agent推理统计相关
+                            "total_token_count": agent_thought.total_token_count,
+                            "total_price": agent_thought.total_price,
                             "latency": agent_thought.latency,
                         })
                 else:
@@ -628,7 +640,8 @@ class AppService(BaseService):
                     agent_thoughts[event_id] = agent_thought
             data = {
                 **agent_thought.model_dump(include={
-                    "event", "thought", "observation", "tool", "tool_input", "answer", "latency",
+                    "event", "thought", "observation", "tool", "tool_input", "answer",
+                    "total_token_count", "total_price", "latency",
                 }),
                 "id": event_id,
                 "conversation_id": str(debug_conversation.id),
@@ -637,20 +650,17 @@ class AppService(BaseService):
             }
             yield f"event: {agent_thought.event}\ndata:{json.dumps(data)}\n\n"
 
-        # 22.将消息以及推理过程添加到数据库
-        thread = Thread(
-            target=self.conversation_service.save_agent_thoughts,
-            kwargs={
-                "flask_app": current_app._get_current_object(),
-                "account_id": account.id,
-                "app_id": app_id,
-                "app_config": draft_app_config,
-                "conversation_id": debug_conversation.id,
-                "message_id": message.id,
-                "agent_thoughts": [agent_thought for agent_thought in agent_thoughts.values()],
-            }
+        # 22.将消息以及推理过程添加到数据库。这里必须在本次请求结束前完成，
+        # 否则下一轮对话可能读取不到刚生成的历史记录与长期记忆。
+        self.conversation_service.save_agent_thoughts(
+            flask_app=current_app._get_current_object(),
+            account_id=account.id,
+            app_id=app_id,
+            app_config=draft_app_config,
+            conversation_id=debug_conversation.id,
+            message_id=message.id,
+            agent_thoughts=[agent_thought for agent_thought in agent_thoughts.values()],
         )
-        thread.start()
 
     def stop_debug_chat(self, app_id: UUID, task_id: UUID, account: Account) -> None:
         """根据传递的应用id+任务id+账号，停止某个应用的调试会话，中断流式事件"""
@@ -692,6 +702,34 @@ class AppService(BaseService):
         )
 
         return messages, paginator
+
+    def get_published_config(self, app_id: UUID, account: Account) -> dict[str, Any]:
+        """根据传递的应用id+账号，获取应用的发布配置"""
+        # 1.获取应用信息并校验权限
+        app = self.get_app(app_id, account)
+
+        # 2.构建发布配置并返回
+        return {
+            "web_app": {
+                "token": app.token_with_default,
+                "status": app.status,
+            }
+        }
+
+    def regenerate_web_app_token(self, app_id: UUID, account: Account) -> str:
+        """根据传递的应用id+账号，重新生成WebApp凭证标识"""
+        # 1.获取应用信息并校验权限
+        app = self.get_app(app_id, account)
+
+        # 2.判断应用是否已发布
+        if app.status != AppStatus.PUBLISHED:
+            raise FailException("应用未发布，无法生成WebApp凭证标识")
+
+        # 3.重新生成token并更新数据
+        token = generate_random_string(16)
+        self.update(app, token=token)
+
+        return token
 
     def _validate_draft_app_config(self, draft_app_config: dict[str, Any], account: Account) -> dict[str, Any]:
         """校验传递的应用草稿配置信息，返回校验后的数据"""

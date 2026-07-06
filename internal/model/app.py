@@ -5,6 +5,8 @@
 @Author  : thezehui@gmail.com
 @File    : app.py
 """
+from datetime import datetime
+
 from sqlalchemy import (
     Column,
     UUID,
@@ -13,14 +15,18 @@ from sqlalchemy import (
     Integer,
     DateTime,
     PrimaryKeyConstraint,
+    Index,
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 
-from internal.entity.app_entity import AppConfigType, DEFAULT_APP_CONFIG
+from internal.entity.app_entity import AppConfigType, DEFAULT_APP_CONFIG, AppStatus
 from internal.entity.conversation_entity import InvokeFrom
+from internal.entity.platform_entity import WechatConfigStatus
 from internal.extension.database_extension import db
+from internal.lib.helper import generate_random_string
 from .conversation import Conversation
+from .platform import WechatConfig
 
 
 class App(db.Model):
@@ -28,6 +34,8 @@ class App(db.Model):
     __tablename__ = "app"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_app_id"),
+        Index("app_account_id_idx", "account_id"),
+        Index("app_token_idx", "token"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
@@ -38,12 +46,13 @@ class App(db.Model):
     name = Column(String(255), nullable=False, server_default=text("''::character varying"))  # 应用名字
     icon = Column(String(255), nullable=False, server_default=text("''::character varying"))  # 应用图标
     description = Column(Text, nullable=False, server_default=text("''::text"))  # 应用描述
+    token = Column(String(255), nullable=True, server_default=text("''::character varying"))  # 应用凭证信息
     status = Column(String(255), nullable=False, server_default=text("''::character varying"))  # 应用状态
     updated_at = Column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
-        server_onupdate=text("CURRENT_TIMESTAMP(0)"),
+        onupdate=datetime.now,
     )
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)"))
 
@@ -106,12 +115,66 @@ class App(db.Model):
 
         return debug_conversation
 
+    @property
+    def token_with_default(self) -> str:
+        """获取带有默认值的token"""
+        # 1.判断状态是否为已发布
+        if self.status != AppStatus.PUBLISHED:
+            # 2.非发布的情况下需要清空数据，并提交更新
+            if self.token is not None or self.token != "":
+                self.token = None
+                db.session.commit()
+            return ""
+
+        # 3.已发布状态需要判断token是否存在，不存在则生成
+        if self.token is None or self.token == "":
+            self.token = generate_random_string(16)
+            db.session.commit()
+
+        return self.token
+
+    @property
+    def wechat_config(self) -> "WechatConfig":
+        """获取应用的微信发布配置信息"""
+        # 1.获取当前应用的微信配置信息
+        config = db.session.query(WechatConfig).filter(
+            WechatConfig.app_id == self.id,
+        ).one_or_none()
+
+        # 2.检测配置是否存在，不存在则创建
+        if not config:
+            config = WechatConfig(app_id=self.id, status=WechatConfigStatus.UNCONFIGURED)
+            db.session.add(config)
+            db.session.commit()
+
+        # 3.检查wechat_config只要app_id、app_secret和token有一个没填写则更新配置状态
+        if config.status == WechatConfigStatus.CONFIGURED:
+            if not config.wechat_app_id or not config.wechat_app_secret or not config.wechat_token:
+                config.status = WechatConfigStatus.UNCONFIGURED
+                db.session.commit()
+
+        # 4.检测应用发布状态与配置信息是否匹配，不匹配则更新
+        if self.status == AppStatus.DRAFT:
+            # 5.草稿配置，检查WechatConfig是否设置为已发布，是的话则更新
+            if config.status == WechatConfigStatus.CONFIGURED:
+                config.status = WechatConfigStatus.UNCONFIGURED
+                db.session.commit()
+        elif self.status == AppStatus.PUBLISHED:
+            # 6.已发布配置，检测WechatConfig如果填写了app_id、app_secret与token，则更新配置信息
+            if config.status == WechatConfigStatus.UNCONFIGURED:
+                if config.wechat_app_id and config.wechat_app_secret and config.wechat_token:
+                    config.status = WechatConfigStatus.CONFIGURED
+                    db.session.commit()
+
+        return config
+
 
 class AppConfig(db.Model):
     """应用配置模型"""
     __tablename__ = "app_config"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_app_config_id"),
+        Index("app_config_app_id_idx", "app_id"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))  # 配置id
@@ -137,7 +200,7 @@ class AppConfig(db.Model):
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
-        server_onupdate=text("CURRENT_TIMESTAMP(0)"),
+        onupdate=datetime.now,
     )
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)"))
 
@@ -156,6 +219,7 @@ class AppConfigVersion(db.Model):
     __tablename__ = "app_config_version"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_app_config_version_id"),
+        Index("app_config_version_app_id_idx", "app_id"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))  # 配置id
@@ -184,7 +248,7 @@ class AppConfigVersion(db.Model):
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
-        server_onupdate=text("CURRENT_TIMESTAMP(0)"),
+        onupdate=datetime.now,
     )
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)"))
 
@@ -194,6 +258,7 @@ class AppDatasetJoin(db.Model):
     __tablename__ = "app_dataset_join"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_app_dataset_join_id"),
+        Index("app_dataset_join_app_id_dataset_id_idx", "app_id", "dataset_id"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
@@ -203,6 +268,6 @@ class AppDatasetJoin(db.Model):
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
-        server_onupdate=text("CURRENT_TIMESTAMP(0)"),
+        onupdate=datetime.now,
     )
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)"))

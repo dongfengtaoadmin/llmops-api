@@ -185,8 +185,8 @@ class ReACTAgent(FunctionCallAgent):
                         ))
 
         # 8.计算LLM的输入+输出token总数
-        input_token_count = self.llm.get_num_tokens_from_messages(state["messages"])
-        output_token_count = self.llm.get_num_tokens_from_messages([gathered])
+        input_token_count = self._get_num_tokens_from_messages(state["messages"])
+        output_token_count = self._get_num_tokens_from_messages([gathered])
 
         # 9.获取输入/输出价格和单位
         input_price, output_price, unit = self.llm.get_pricing()

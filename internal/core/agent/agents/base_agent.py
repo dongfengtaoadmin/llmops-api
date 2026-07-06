@@ -6,6 +6,7 @@
 @File    : base_agent.py
 """
 import uuid
+import logging
 from abc import abstractmethod
 from threading import Thread
 from typing import Optional, Any, Iterator
@@ -283,6 +284,30 @@ class BaseAgent(Serializable, Runnable):
 
         # 4.调用队列管理器监听数据并返回迭代器 消费者（读取队列）
         yield from self._agent_queue_manager.listen(input["task_id"])
+
+    def _get_num_tokens_from_messages(self, messages: list[AnyMessage]) -> int:
+        """获取消息token数，模型不支持精确计数时降级为文本长度估算。"""
+        try:
+            return self.llm.get_num_tokens_from_messages(messages)
+        except NotImplementedError:
+            logging.warning(
+                "当前模型不支持get_num_tokens_from_messages，已降级为估算token数, model=%s",
+                getattr(self.llm, "model_name", getattr(self.llm, "model", "")),
+            )
+        except Exception:
+            logging.exception("统计消息token数失败，已降级为估算token数")
+
+        return sum(self._estimate_message_tokens(message) for message in messages)
+
+    @staticmethod
+    def _estimate_message_tokens(message: AnyMessage) -> int:
+        """按字符粗略估算token，避免统计逻辑影响主流程。"""
+        content = getattr(message, "content", "")
+        if isinstance(content, str):
+            text = content
+        else:
+            text = str(content)
+        return max(1, len(text) // 4)
 
     @property
     def agent_queue_manager(self) -> AgentQueueManager:
