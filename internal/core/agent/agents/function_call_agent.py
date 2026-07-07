@@ -192,12 +192,6 @@ class FunctionCallAgent(BaseAgent):
                     # 7.提取片段内容并检测是否开启输出审核
                     review_config = self.agent_config.review_config
                     content = chunk.content
-                    # 处理结构化内容格式（某些模型返回列表格式 [{'text': '...', 'type': 'text', 'index': 0}]）
-                    if isinstance(content, list):
-                        content = "".join(
-                            item.get("text", "") if isinstance(item, dict) else str(item)
-                            for item in content
-                        )
                     if review_config["enable"] and review_config["outputs_config"]["enable"]:
                         for keyword in review_config["keywords"]:
                             content = re.sub(re.escape(keyword), "**", content, flags=re.IGNORECASE)
@@ -223,8 +217,14 @@ class FunctionCallAgent(BaseAgent):
             raise e
 
         # 8.计算LLM的输入+输出token总数
+        print(state["messages"],'state["messages"]state["messages"]state["messages"] \n')
+        print([gathered],'[gathered][gathered][gathered]"] \n')
+      
+
         input_token_count = self.llm.get_num_tokens_from_messages(state["messages"])
         output_token_count = self.llm.get_num_tokens_from_messages([gathered])
+        print(input_token_count,'input_token_counts \n')
+        print(output_token_count,'output_token_count \n')
 
         # 9.获取输入/输出价格和单位
         input_price, output_price, unit = self.llm.get_pricing()
