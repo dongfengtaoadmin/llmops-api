@@ -248,8 +248,12 @@ class Workflow(BaseTool):
         return graph.compile()
 
     def _run(self, *args: Any, **kwargs: Any) -> Any:
-        """工作流组件基础run方法"""
-        return self._workflow.invoke({"inputs": kwargs})
+            """工作流组件基础run方法"""
+            # 1.调用工作流获取结果信息
+            result = self._workflow.invoke({"inputs": kwargs})
+
+            # 2.提取响应结果的outputs内容作为输出
+            return result.get("outputs", {})
 
     def stream(
             self,

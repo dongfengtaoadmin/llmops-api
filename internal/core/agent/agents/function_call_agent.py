@@ -217,14 +217,8 @@ class FunctionCallAgent(BaseAgent):
             raise e
 
         # 8.计算LLM的输入+输出token总数
-        print(state["messages"],'state["messages"]state["messages"]state["messages"] \n')
-        print([gathered],'[gathered][gathered][gathered]"] \n')
-      
-
         input_token_count = self.llm.get_num_tokens_from_messages(state["messages"])
         output_token_count = self.llm.get_num_tokens_from_messages([gathered])
-        print(input_token_count,'input_token_counts \n')
-        print(output_token_count,'output_token_count \n')
 
         # 9.获取输入/输出价格和单位
         input_price, output_price, unit = self.llm.get_pricing()
