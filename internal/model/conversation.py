@@ -5,6 +5,8 @@
 @Author  : thezehui@gmail.com
 @File    : conversation.py
 """
+from datetime import datetime
+
 from sqlalchemy import (
     Column,
     UUID,
@@ -16,9 +18,12 @@ from sqlalchemy import (
     Numeric,
     Float,
     text,
-    PrimaryKeyConstraint, func, asc,
+    func,
+    PrimaryKeyConstraint,
+    Index,
 )
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
 
 from internal.extension.database_extension import db
 
@@ -28,6 +33,8 @@ class Conversation(db.Model):
     __tablename__ = "conversation"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_conversation_id"),
+        Index("conversation_app_id_idx", "app_id"),
+        Index("conversation_app_created_by_idx", "created_by"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
@@ -45,7 +52,7 @@ class Conversation(db.Model):
         DateTime,
         nullable=False,
         server_default=text('CURRENT_TIMESTAMP(0)'),
-        server_onupdate=text('CURRENT_TIMESTAMP(0)'),
+        onupdate=datetime.now,
     )
     created_at = Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP(0)'))
 
@@ -64,6 +71,8 @@ class Message(db.Model):
     __tablename__ = "message"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_message_id"),
+        Index("message_conversation_id_idx", "conversation_id"),
+        Index("message_created_by_idx", "created_by"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
@@ -80,6 +89,7 @@ class Message(db.Model):
 
     # 消息关联的原始问题
     query = Column(Text, nullable=False, server_default=text("''::text"))  # 用户提问的原始query
+    image_urls = Column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))  # 用户提问的图片URL列表信息
     message = Column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))  # 产生answer的消息列表
     message_token_count = Column(Integer, nullable=False, server_default=text("0"))  # 消息列表的token总数
     message_unit_price = Column(Numeric(10, 7), nullable=False, server_default=text("0.0"))  # 消息的单价
@@ -104,16 +114,52 @@ class Message(db.Model):
         DateTime,
         nullable=False,
         server_default=text('CURRENT_TIMESTAMP(0)'),
-        server_onupdate=text('CURRENT_TIMESTAMP(0)'),
+        onupdate=datetime.now,
     )
     created_at = Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP(0)'))
 
+    # 智能体推理列表，创建表关联     访问关联属性时才触发查询                                                                  
+    agent_thoughts = relationship(                                                                    
+        # 目标模型类名：关联到 MessageAgentThought 模型                                               
+        "MessageAgentThought",                                                                        
+                                                                                                        
+        # 反向引用：在 MessageAgentThought 模型中自动创建一个 msg 属性                                
+        # 使用方式：agent_thought.msg 可以直接访问所属的 Message 对象                                 
+        # 等价于在 MessageAgentThought 中定义：msg = relationship("Message")                          
+        backref="msg",                                                                                
+                                                                                                        
+        # 加载策略：使用 SELECT IN 预加载策略                                                         
+        # 当查询 Message 时，会自动用 IN 查询加载关联的 agent_thoughts                                
+        # 例如：SELECT * FROM message_agent_thought WHERE message_id IN (...)                         
+        # 优点：避免 N+1 查询问题，性能优于默认的 lazy="select"                                       
+        lazy="selectin",                                                                              
+                                                                                                        
+        # 被动删除策略：当 Message 被删除时，不主动删除关联的 agent_thoughts                          
+        # "all" 表示完全被动，依赖数据库的 ON DELETE CASCADE 外键约束                                 
+        # 注意：需要在数据库层面定义外键时添加 ON DELETE CASCADE                                      
+        passive_deletes="all",                                                                        
+                                                                                                        
+        # 返回类型：True 表示这是一对多关系，返回列表                                                 
+        # uselist=True：message.agent_thoughts 返回 [MessageAgentThought, ...]                        
+        # uselist=False：返回单个对象（用于一对一关系）                                               
+        uselist=True,                                                                                 
+                                                                                                        
+        # 指定外键列：这里指定 Message.id 作为外键参照                                                
+        # 注意：这个参数在标准用法中应该指定"被引用"的列                                              
+        # 通常应该是 MessageAgentThought.message_id，而不是 Message.id                                
+        # 这里可能存在问题，建议改为：foreign_keys="MessageAgentThought.message_id"                   
+        foreign_keys=[id],                                                                            
+                                                                                                        
+        # 主连接条件：定义两个表如何关联                                                              
+        # SQL 等价于：ON message_agent_thought.message_id = message.id                                
+        # 使用字符串形式可以避免循环导入问题                                                          
+        primaryjoin="MessageAgentThought.message_id == Message.id",                                   
+    )  
+
     @property
-    def agent_thoughts(self) -> list["MessageAgentThought"]:
-        """只读属性，返回该消息对应的智能体推理过程列表"""
-        return db.session.query(MessageAgentThought).filter(
-            MessageAgentThought.message_id == self.id,
-        ).order_by(asc("position")).all()
+    def conversation(self) -> Conversation:
+        """只读属性，返回该消息对应的会话记录"""
+        return db.session.query(Conversation).get(self.conversation_id)
 
 
 class MessageAgentThought(db.Model):
@@ -121,6 +167,9 @@ class MessageAgentThought(db.Model):
     __tablename__ = "message_agent_thought"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_message_agent_thought_id"),
+        Index("message_agent_thought_app_id_idx", "app_id"),
+        Index("message_agent_thought_conversation_id_idx", "conversation_id"),
+        Index("message_agent_thought_message_id_idx", "message_id"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
@@ -178,6 +227,6 @@ class MessageAgentThought(db.Model):
         DateTime,
         nullable=False,
         server_default=text('CURRENT_TIMESTAMP(0)'),
-        server_onupdate=text('CURRENT_TIMESTAMP(0)'),
+        onupdate=datetime.now,
     )  # 更新时间
     created_at = Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP(0)'))  # 创建时间

@@ -5,14 +5,19 @@
 @Author  : thezehui@gmail.com
 @File    : module.py
 """
+from flask_login import LoginManager
 from flask_migrate import Migrate
+from flask_weaviate import FlaskWeaviate
 from injector import Module, Binder, Injector
 from redis import Redis
 
 from internal.extension.database_extension import db
+from internal.extension.login_extension import login_manager
 from internal.extension.migrate_extension import migrate
 from internal.extension.redis_extension import redis_client
+from internal.extension.weaviate_extension import weaviate
 from pkg.sqlalchemy import SQLAlchemy
+
 
 
 # 为什么需要这个模块？
@@ -56,6 +61,7 @@ class ExtensionModule(Module):
 
     def configure(self, binder: Binder) -> None:
         binder.bind(SQLAlchemy, to=db)
+        binder.bind(FlaskWeaviate, to=weaviate)
         binder.bind(Migrate, to=migrate)
         # 后续如果要使用 redis_client 只需要 声明一个 Redis 属性就会自行注入了
         binder.bind(Redis, to=redis_client)

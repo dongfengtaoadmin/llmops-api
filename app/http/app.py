@@ -5,19 +5,21 @@
 @Author  : thezehui@gmail.com
 @File    : app.py
 """
-from internal.server import Http
-from internal.router import Router
-from config import Config
-from internal.middleware import Middleware
+import dotenv
 from flask_login import LoginManager
 from flask_migrate import Migrate
-import os
+from flask_weaviate import FlaskWeaviate
+
+from config import Config
+from internal.middleware import Middleware
+from internal.router import Router
+from internal.server import Http
 from pkg.sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-import dotenv
-from app.http.module import injector
-# 将 env 文件中的环境变量加载到 os.environ 中
+from .module import injector
+
+# 1.将env加载到环境变量中
 dotenv.load_dotenv()
+
 conf = Config()
 
 app = Http(
@@ -25,6 +27,7 @@ app = Http(
     router=injector.get(Router),
     conf=conf,
     db=injector.get(SQLAlchemy),
+    weaviate=injector.get(FlaskWeaviate),
     migrate=injector.get(Migrate),
     login_manager=injector.get(LoginManager),
     middleware=injector.get(Middleware),

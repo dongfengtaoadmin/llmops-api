@@ -76,7 +76,8 @@ class IndexingService(BaseService):
                 self._completed(document, lc_segments)
 
             except Exception as e:
-                logging.exception(f"构建文档发生错误，错误信息：{str(e)}")
+                #  % 格式化：字符串格式化只在日志真正需要输出时才执行    
+                logging.exception("构建文档发生错误, 错误信息: %(error)s", {"error": e})
                 self.update(
                     document,
                     status=DocumentStatus.ERROR,
@@ -92,7 +93,7 @@ class IndexingService(BaseService):
         # 2.根据传递的document_id获取文档记录
         document = self.get(Document, document_id)
         if document is None:
-            logging.exception(f"当前文档不存在，文档id：{document_id}")
+            logging.exception("当前文档不存在, 文档id: %(document_id)s", {"document_id": document_id})
             raise NotFoundException("当前文档不存在")
 
         # 3.查询归属于当前文档的所有片段的节点id

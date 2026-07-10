@@ -227,8 +227,11 @@ class FunctionCallAgent(BaseAgent):
         total_token_count = input_token_count + output_token_count
         total_price = (input_token_count * input_price + output_token_count * output_price) * unit
 
-        # 11.如果类型为推理则添加智能体推理事件
-        if generation_type == "thought":
+        has_tool_calls = bool(getattr(gathered, "tool_calls", None))
+
+        # 11.如果模型发起了工具调用，则添加智能体推理事件并继续执行工具节点。
+        # 部分模型会在同一轮响应里先输出文本，再追加 tool_calls，不能仅凭首个文本 chunk 判断为最终答案。
+        if has_tool_calls:
             self.agent_queue_manager.publish(state["task_id"], AgentThought(
                 id=id,
                 task_id=state["task_id"],

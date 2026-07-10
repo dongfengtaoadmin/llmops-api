@@ -249,7 +249,7 @@ class WebAppService(BaseService):
             Conversation.created_by == account.id,
             Conversation.invoke_from == InvokeFrom.WEB_APP,
             Conversation.is_pinned == is_pinned,
-            ~Conversation.is_deleted,
+            ~Conversation.is_deleted, # 它的含义是：筛选出 is_deleted 为 False 的记录。
         ).order_by(desc("created_at")).all()
 
         return conversations
