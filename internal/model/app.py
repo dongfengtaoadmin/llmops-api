@@ -14,9 +14,9 @@ from sqlalchemy import (
     Text,
     Integer,
     DateTime,
+    text,
     PrimaryKeyConstraint,
     Index,
-    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 

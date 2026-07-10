@@ -5,8 +5,17 @@
 @Author  : thezehui@gmail.com
 @File    : api_tool.py
 """
+from datetime import datetime
+
 from sqlalchemy import (
-    Column, UUID, String, Text, DateTime, PrimaryKeyConstraint, text
+    Column,
+    UUID,
+    String,
+    Text,
+    DateTime,
+    text,
+    PrimaryKeyConstraint,
+    Index,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -18,6 +27,8 @@ class ApiToolProvider(db.Model):
     __tablename__ = "api_tool_provider"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_api_tool_provider_id"),
+        Index("api_tool_provider_account_id_idx", "account_id"),
+        Index("api_tool_name_idx", "name"),
     )
 
     id = Column(UUID, nullable=False, server_default=text('uuid_generate_v4()'))
@@ -31,12 +42,10 @@ class ApiToolProvider(db.Model):
         DateTime,
         nullable=False,
         server_default=text('CURRENT_TIMESTAMP(0)'),
-        server_onupdate=text('CURRENT_TIMESTAMP(0)')
+        onupdate=datetime.now,
     )
     created_at = Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP(0)'))
 
-    # 当读取这个只读属性的时候 底层就会调用这段语句
-    # 这段代码的目的是建立模型之间的一对多关系查询。
     @property
     def tools(self) -> list["ApiTool"]:
         return db.session.query(ApiTool).filter_by(provider_id=self.id).all()
@@ -47,6 +56,8 @@ class ApiTool(db.Model):
     __tablename__ = "api_tool"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_api_tool_id"),
+        Index("api_tool_account_id_idx", "account_id"),
+        Index("api_tool_provider_id_name_idx", "provider_id", "name"),
     )
 
     id = Column(UUID, nullable=False, server_default=text('uuid_generate_v4()'))
@@ -61,7 +72,7 @@ class ApiTool(db.Model):
         DateTime,
         nullable=False,
         server_default=text('CURRENT_TIMESTAMP(0)'),
-        server_onupdate=text('CURRENT_TIMESTAMP(0)')
+        onupdate=datetime.now,
     )
     created_at = Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP(0)'))
 

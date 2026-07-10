@@ -5,6 +5,8 @@
 @Author  : thezehui@gmail.com
 @File    : account.py
 """
+from datetime import datetime
+
 from flask import current_app
 from flask_login import UserMixin
 from sqlalchemy import (
@@ -14,11 +16,12 @@ from sqlalchemy import (
     DateTime,
     text,
     PrimaryKeyConstraint,
+    Index,
 )
 
+from internal.entity.conversation_entity import InvokeFrom
 from internal.extension.database_extension import db
 from .conversation import Conversation
-from ..entity.conversation_entity import InvokeFrom
 
 
 class Account(UserMixin, db.Model):
@@ -26,6 +29,7 @@ class Account(UserMixin, db.Model):
     __tablename__ = "account"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_account_id"),
+        Index("account_email_idx", "email"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
@@ -41,7 +45,7 @@ class Account(UserMixin, db.Model):
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
-        server_onupdate=text("CURRENT_TIMESTAMP(0)"),
+        onupdate=datetime.now,
     )
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)"))
 
@@ -84,6 +88,8 @@ class AccountOAuth(db.Model):
     __tablename__ = "account_oauth"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_account_oauth_id"),
+        Index("account_oauth_account_id_idx", "account_id"),
+        Index("account_oauth_openid_provider_idx", "openid", "provider"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
@@ -95,6 +101,6 @@ class AccountOAuth(db.Model):
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
-        server_onupdate=text("CURRENT_TIMESTAMP(0)"),
+        onupdate=datetime.now,
     )
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)"))
