@@ -118,7 +118,36 @@ class Message(db.Model):
     )
     created_at = Column(DateTime, nullable=False, server_default=text('CURRENT_TIMESTAMP(0)'))
 
-    # 智能体推理列表，创建表关联     访问关联属性时才触发查询                                                                  
+    # 智能体推理列表，创建表关联     访问关联属性时才触发查询     
+    # 
+    #   1. 没有 joinedload（第一种写法）
+
+    #   - 只查询 Message 对象
+    #   - 当访问 message.agent_thoughts 时，会懒加载（lazy loading）
+    #   - 每次访问都会触发一次新的数据库查询
+    #   - 如果遍历多个 message 并访问 agent_thoughts，会产生 N+1 查询问题
+
+    #   # 假设有 10 条 message
+    #   for msg in messages:  # 1 次查询
+    #       print(msg.agent_thoughts)  # 每次都会触发 1 次查询，共 10 次
+    #   # 总共: 1 + 10 = 11 次数据库查询
+
+    #   2. 有 joinedload（第二种写法）
+
+    #   - 使用 JOIN 一次性加载 Message 和关联的 agent_thoughts
+    #   - 后续访问 message.agent_thoughts 不需要额外查询
+    #   - 避免了 N+1 问题，性能更好
+
+    #   # 假设有 10 条 message
+    #   for msg in messages:  # 1 次 JOIN 查询
+    #       print(msg.agent_thoughts)  # 不会触发新查询
+    #   # 总共: 1 次数据库查询                                                                                                                              
+                                                                                                                                                        
+    #   使用建议                                                                                                                                            
+                                                                                                                                                        
+    #   - 需要访问关联数据：使用 joinedload，性能更好                                                                                                       
+    #   - 不需要关联数据：不使用 joinedload，避免不必要的 JOIN 开销                                                                                       
+                                                                        
     agent_thoughts = relationship(                                                                    
         # 目标模型类名：关联到 MessageAgentThought 模型                                               
         "MessageAgentThought",                                                                        
