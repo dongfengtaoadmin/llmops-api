@@ -332,38 +332,43 @@ class IndexingService(BaseService):
             lc_segment.metadata["document_enabled"] = True
             lc_segment.metadata["segment_enabled"] = True
 
-        # 2.调用向量数据库，每次存储10条数据，避免一次传递过多的数据，耗时任务进行多线程可以不用等待
-        def thread_func(flask_app: Flask, chunks: list[LCDocument], ids: list[UUID]) -> None:
-            """线程函数，执行向量数据库与postgres数据的存储"""
-            # 在这个代码中，with flask_app.app_context(): 的作用是在后台线程中手动创建 Flask 应用上下文，让线程能够安全地使用 Flask 的扩展（如数据库、current_app 等）
-            with flask_app.app_context():
-                try:
-                    self.vector_database_service.vector_store.add_documents(
-                        chunks, ids=ids,
-                    )
-                    with self.db.auto_commit():
-                        self.db.session.query(Segment).filter(
-                            Segment.node_id.in_(ids)
-                        ).update({
-                            "status": SegmentStatus.COMPLETED,
-                            "completed_at": datetime.now(),
-                            "enabled": True,
-                        })
-                except Exception as e:
-                    logging.exception(f"构建文档片段索引发生异常，错误信息： {str(e)}")
-                    with self.db.auto_commit():
-                        self.db.session.query(Segment).filter(
-                            Segment.node_id.in_(ids)
-                        ).update({
-                            "status": SegmentStatus.ERROR,
-                            "completed_at": None,
-                            "stopped_at": datetime.now(),
-                            "enabled": False,
-                        })
+        # 2.调用向量数据库，每次存储10条数据，避免一次传递过多的数据
+        try:
+            for i in range(0, len(lc_segments), 10):
+                chunks = lc_segments[i:i + 10]
+                ids = [chunk.metadata["node_id"] for chunk in chunks]
+                self.vector_database_service.vector_store.add_documents(chunks, ids=ids)
+                with self.db.auto_commit():
+                    self.db.session.query(Segment).filter(
+                        Segment.node_id.in_(ids)
+                    ).update({
+                        "status": SegmentStatus.COMPLETED,
+                        "completed_at": datetime.now(),
+                        "enabled": True,
+                    })
+        except Exception as e:
+            logging.exception(
+                "构建文档片段索引发生异常, 错误信息: %(error)s",
+                {"error": e},
+            )
+            with self.db.auto_commit():
+                self.db.session.query(Segment).filter(
+                    Segment.node_id.in_(ids)
+                ).update({
+                    "status": SegmentStatus.ERROR,
+                    "completed_at": None,
+                    "stopped_at": datetime.now(),
+                    "enabled": False,
+                    "error": str(e),
+                })
 
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = []
-
+        # 6.更新文档的状态数据
+        self.update(
+            document,
+            status=DocumentStatus.COMPLETED,
+            completed_at=datetime.now(),
+            enabled=True,
+        )
 
             #   假设 lc_segments 有 25 条数据：
 
@@ -413,24 +418,7 @@ class IndexingService(BaseService):
             #       存入向量库             存入向量库             存入向量库                                                                                                     
                                                                                                                                                                             
             #   总结                                                                                                                                                             
-                                                                                                                                                                            
-            #   这段代码的作用是：将大量片段分批（每批10条），并行提交到线程池处理，提高处理效率。
-            for i in range(0, len(lc_segments), 10):
-                chunks = lc_segments[i:i + 10]
-                ids = [chunk.metadata["node_id"] for chunk in chunks]
-                futures.append(executor.submit(thread_func, current_app._get_current_object(), chunks, ids))
-
-            for future in futures:
-                # 这里就会等等执行
-                future.result()
-
-        # 6.更新文档的状态数据
-        self.update(
-            document,
-            status=DocumentStatus.COMPLETED,
-            completed_at=datetime.now(),
-            enabled=True,
-        )
+                                                                                                                                                                        
 
     @classmethod
     def _clean_extra_text(cls, text: str) -> str:
