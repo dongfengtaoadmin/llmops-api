@@ -14,7 +14,7 @@
 python start_celery.py              # 开发模式（无热更新）
 python start_celery.py --prod       # 生产模式
 python start_celery.py --reload    # 开发模式 + 热更新
-python start_celery.py --pool solo # macOS 推荐使用 solo 池
+python start_celery.py --pool solo # 如需单线程调试，可切换 solo 池
 """
 import argparse
 import os
@@ -164,9 +164,9 @@ def main():
     parser.add_argument(
         "--pool",
         type=str,
-        default="solo",
+        default="gevent",
         choices=["prefork", "solo", "threads", "gevent", "eventlet"],
-        help="池类型（macOS 推荐 solo，默认 solo）"
+        help="池类型（默认 gevent，适合 I/O 密集型任务）"
     )
     parser.add_argument(
         "--loglevel", "-l",
