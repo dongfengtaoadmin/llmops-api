@@ -650,12 +650,10 @@ class AppService(BaseService):
             }
             yield f"event: {agent_thought.event}\ndata:{json.dumps(data)}\n\n"
 
-        # 22.将消息以及推理过程添加到数据库。这里必须在本次请求结束前完成，
-        # 否则下一轮对话可能读取不到刚生成的历史记录与长期记忆。
+        # 22.将消息以及推理过程添加到数据库
         self.conversation_service.save_agent_thoughts(
-            flask_app=current_app._get_current_object(),
             account_id=account.id,
-            app_id=app_id,
+            app_id=app.id,
             app_config=draft_app_config,
             conversation_id=debug_conversation.id,
             message_id=message.id,

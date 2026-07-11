@@ -220,6 +220,7 @@ class ConversationService(BaseService):
 
                 # 9.检测是否开启长期记忆
                 if app_config["long_term_memory"]["enable"]:
+                    # 一些处理耗时比较长的 非关键信息 可以在线程里面去做
                     Thread(
                         target=self._generate_summary_and_update,
                         kwargs={
@@ -232,6 +233,7 @@ class ConversationService(BaseService):
 
                 # 10.处理生成新会话名称
                 if conversation.is_new:
+                    # 一些处理耗时比较长的 非关键信息 可以在线程里面去做
                     Thread(
                         target=self._generate_conversation_name_and_update,
                         kwargs={
