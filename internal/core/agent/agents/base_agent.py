@@ -61,7 +61,7 @@ class BaseAgent(Serializable, Runnable):
         image_urls = []
         if isinstance(content, str):
             query = content
-        elif isinstance(content, list):
+        elif isinstance(content, list): # 如果是列表，则说明是有传图片
             query = content[0]["text"]
             image_urls = [chunk["image_url"]["url"] for chunk in content if chunk.get("type") == "image_url"]
         agent_result = AgentResult(query=query, image_urls=image_urls)

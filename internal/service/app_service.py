@@ -529,7 +529,7 @@ class AppService(BaseService):
 
         return app
 
-    def debug_chat(self, app_id: UUID, query: str, account: Account) -> Generator:
+    def debug_chat(self, app_id: UUID, req: DebugChatReq, account: Account) -> Generator:
         """根据传递的应用id+提问query向特定的应用发起会话调试"""
         # 1.获取应用信息并校验权限
         app = self.get_app(app_id, account)
@@ -547,10 +547,11 @@ class AppService(BaseService):
             conversation_id=debug_conversation.id,
             invoke_from=InvokeFrom.DEBUGGER,
             created_by=account.id,
-            query=query,
+            query=req.query.data,
+            image_urls=req.image_urls.data,
             status=MessageStatus.NORMAL,
         )
-        
+
         # 5.从语言模型管理器中加载大语言模型
         llm = self.language_model_service.load_language_model(draft_app_config.get("model_config", {}))
 
@@ -579,7 +580,7 @@ class AppService(BaseService):
             )
             tools.append(dataset_retrieval)
 
-          # 10.检测是否关联工作流，如果关联了工作流则将工作流构建成工具添加到tools中
+        # 10.检测是否关联工作流，如果关联了工作流则将工作流构建成工具添加到tools中
         if draft_app_config["workflows"]:
             workflow_tools = self.app_config_service.get_langchain_tools_by_workflow_ids(
                 [workflow["id"] for workflow in draft_app_config["workflows"]]
@@ -599,10 +600,10 @@ class AppService(BaseService):
                 review_config=draft_app_config["review_config"],
             ),
         )
-        
+
         agent_thoughts = {}
         for agent_thought in agent.stream({
-            "messages": [HumanMessage(query)],
+            "messages": [llm.convert_to_human_message(req.query.data, req.image_urls.data)],
             "history": history,
             "long_term_memory": debug_conversation.summary,
         }):
@@ -617,7 +618,7 @@ class AppService(BaseService):
                         # 14.初始化智能体消息事件
                         agent_thoughts[event_id] = agent_thought
                     else:
-                         # 15.叠加智能体消息
+                        # 15.叠加智能体消息
                         agent_thoughts[event_id] = agent_thoughts[event_id].model_copy(update={
                             "thought": agent_thoughts[event_id].thought + agent_thought.thought,
                             # 消息相关数据

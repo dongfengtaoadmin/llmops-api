@@ -6,12 +6,11 @@
 @File    : token_buffer_memory.py
 """
 from dataclasses import dataclass
-import logging
 
-from langchain_core.language_models import BaseLanguageModel
-from langchain_core.messages import AnyMessage, HumanMessage, AIMessage, trim_messages, get_buffer_string
+from langchain_core.messages import AnyMessage, AIMessage, trim_messages, get_buffer_string
 from sqlalchemy import desc
 
+from internal.core.language_model.entities.model_entity import BaseLanguageModel
 from internal.entity.conversation_entity import MessageStatus
 from internal.model import Conversation, Message
 from pkg.sqlalchemy import SQLAlchemy
@@ -47,10 +46,9 @@ class TokenBufferMemory:
         prompt_messages = []
         for message in messages:
             prompt_messages.extend([
-                HumanMessage(content=message.query),
+                self.model_instance.convert_to_human_message(message.query, message.image_urls),
                 AIMessage(content=message.answer),
             ])
-
         # 4.调用LangChain继承的trim_messages函数剪切消息列表
 
         # 剪切前（2500 tokens）:
@@ -65,10 +63,11 @@ class TokenBufferMemory:
         # ├── 第4轮: "什么是神经网络" + "神经网络..."
         # └── 第5轮: "什么是Transformer" + "Transformer..."
         
+        # 4.调用LangChain继承的trim_messages函数剪切消息列表
         return trim_messages(
             messages=prompt_messages,
             max_tokens=max_token_limit,
-            token_counter=self._get_num_tokens_from_messages,
+            token_counter=self.model_instance,
             strategy="last",
             start_on="human",
             end_on="ai",
@@ -87,27 +86,3 @@ class TokenBufferMemory:
 
         # 2.调用LangChain集成的get_buffer_string()函数将消息列表转换成文本
         return get_buffer_string(messages, human_prefix, ai_prefix)
-
-    def _get_num_tokens_from_messages(self, messages: list[AnyMessage]) -> int:
-        """获取消息token数，模型不支持精确计数时降级为文本长度估算。"""
-        try:
-            return self.model_instance.get_num_tokens_from_messages(messages)
-        except NotImplementedError:
-            logging.warning(
-                "当前模型不支持get_num_tokens_from_messages，短期记忆裁剪已降级为估算token数, model=%s",
-                getattr(self.model_instance, "model_name", getattr(self.model_instance, "model", "")),
-            )
-        except Exception:
-            logging.exception("短期记忆裁剪统计token数失败，已降级为估算token数")
-
-        return sum(self._estimate_message_tokens(message) for message in messages)
-
-    @staticmethod
-    def _estimate_message_tokens(message: AnyMessage) -> int:
-        """按字符粗略估算token，避免统计逻辑影响主流程。"""
-        content = getattr(message, "content", "")
-        if isinstance(content, str):
-            text = content
-        else:
-            text = str(content)
-        return max(1, len(text) // 4)
