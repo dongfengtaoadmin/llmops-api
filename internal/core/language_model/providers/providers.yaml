@@ -8,7 +8,7 @@
     - completion
 - name: anthropic
   label: Claude兼容
-  description: Anthropic协议兼容模型，例如腾讯云Coding Anthropic接口的kimi-k2.5。
+  description: Anthropic协议兼容模型，例如腾讯云Coding Anthropic接口的glm-5和kimi-k2.5。
   icon: icon.svg
   background: "#F3F4F6"
   supported_model_types:

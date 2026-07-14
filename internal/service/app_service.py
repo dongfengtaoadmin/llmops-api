@@ -7,8 +7,6 @@
 """
 import io
 import json
-import logging
-import os
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Generator
@@ -20,16 +18,17 @@ from injector import inject
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableParallel
 from langchain_openai import ChatOpenAI
 from redis import Redis
 from sqlalchemy import func, desc
 from sqlalchemy.orm import joinedload
 from werkzeug.datastructures import FileStorage
-from internal.core.agent.agents import FunctionCallAgent, AgentQueueManager
+
+from internal.core.agent.agents import FunctionCallAgent, AgentQueueManager, ReACTAgent
 from internal.core.agent.entities.agent_entity import AgentConfig
 from internal.core.agent.entities.queue_entity import QueueEvent
 from internal.core.language_model import LanguageModelManager
-from internal.core.agent.agents import FunctionCallAgent, AgentQueueManager, ReACTAgent
 from internal.core.language_model.entities.model_entity import ModelParameterType, ModelFeature
 from internal.core.memory import TokenBufferMemory
 from internal.core.tools.api_tools.providers import ApiProviderManager
@@ -37,8 +36,7 @@ from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 from internal.entity.ai_entity import OPTIMIZE_PROMPT_TEMPLATE
 from internal.entity.app_entity import AppStatus, AppConfigType, DEFAULT_APP_CONFIG
 from internal.entity.app_entity import GENERATE_ICON_PROMPT_TEMPLATE
-# from internal.entity.audio_entity import ALLOWED_AUDIO_VOICES
-from langchain_core.messages import  HumanMessage
+from internal.entity.audio_entity import ALLOWED_AUDIO_VOICES
 from internal.entity.conversation_entity import InvokeFrom, MessageStatus
 from internal.entity.dataset_entity import RetrievalSource
 from internal.entity.workflow_entity import WorkflowStatus
@@ -1017,8 +1015,7 @@ class AppService(BaseService):
             if (
                     set(text_to_speech.keys()) != {"enable", "voice", "auto_play"}
                     or not isinstance(text_to_speech["enable"], bool)
-                    # todo:等待多模态Agent实现时添加音色
-                    or text_to_speech["voice"] not in ["echo"]
+                    or text_to_speech["voice"] not in ALLOWED_AUDIO_VOICES
                     or not isinstance(text_to_speech["auto_play"], bool)
             ):
                 raise ValidateErrorException("文本转语音设置格式错误")
