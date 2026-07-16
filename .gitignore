@@ -3,3 +3,11 @@ env/
 tmp/
 storage/
 .env
+
+
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+__pycache__/
+*.py[cod]
