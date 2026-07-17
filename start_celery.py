@@ -164,9 +164,9 @@ def main():
     parser.add_argument(
         "--pool",
         type=str,
-        default="gevent",
+        default="threads",
         choices=["prefork", "solo", "threads", "gevent", "eventlet"],
-        help="池类型（默认 gevent，适合 I/O 密集型任务）"
+        help="池类型（默认 threads，兼容 Weaviate 的同步 gRPC 调用）"
     )
     parser.add_argument(
         "--loglevel", "-l",

@@ -5,19 +5,6 @@
 @Author  : thezehui@gmail.com
 @File    : app.py
 """
-import os
-
-# 为 gevent 工作池提前打猴子补丁，让 socket/ssl/thread 等阻塞 I/O 支持协程切换。
-# 这段必须放在业务模块导入之前，否则部分标准库模块可能已经按阻塞版本加载。
-from gevent import monkey
-
-monkey.patch_all()
-
-# grpc 默认也可能使用阻塞 I/O，这里让 grpc 与 gevent 的事件循环协同工作。
-import grpc.experimental.gevent
-
-grpc.experimental.gevent.init_gevent()
-
 import dotenv
 from flask_login import LoginManager
 from flask_migrate import Migrate

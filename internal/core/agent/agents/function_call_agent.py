@@ -10,7 +10,7 @@ import logging
 import re
 import time
 import uuid
-from typing import Literal
+from typing import Any, Literal
 
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, RemoveMessage, AIMessage
 from langchain_core.messages import messages_to_dict
@@ -32,6 +32,18 @@ from .base_agent import BaseAgent
 
 class FunctionCallAgent(BaseAgent):
     """基于函数/工具调用的智能体"""
+
+    @staticmethod
+    def _stringify_message_content(content: Any) -> str:
+        """兼容部分模型返回的结构化文本块。"""
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return "".join(
+                item.get("text", "") if isinstance(item, dict) else str(item)
+                for item in content
+            )
+        return "" if content is None else str(content)
 
     def _build_agent(self) -> CompiledStateGraph:
         """构建LangGraph图结构编译程序"""
@@ -181,17 +193,19 @@ class FunctionCallAgent(BaseAgent):
                     gathered += chunk
 
                 # 5.检测生成类型是工具参数还是文本生成
+                chunk_content = self._stringify_message_content(chunk.content)
+
                 if not generation_type:
                     if chunk.tool_calls:
                         generation_type = "thought"
-                    elif chunk.content:
+                    elif chunk_content:
                         generation_type = "message"
 
                 # 6.如果生成的是消息则提交智能体消息事件
                 if generation_type == "message":
                     # 7.提取片段内容并检测是否开启输出审核
                     review_config = self.agent_config.review_config
-                    content = chunk.content
+                    content = chunk_content
                     if review_config["enable"] and review_config["outputs_config"]["enable"]:
                         for keyword in review_config["keywords"]:
                             content = re.sub(re.escape(keyword), "**", content, flags=re.IGNORECASE)

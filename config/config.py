@@ -40,7 +40,9 @@ class Config:
         self.WEAVIATE_HTTP_PORT = _get_env("WEAVIATE_HTTP_PORT")
         self.WEAVIATE_GRPC_HOST = _get_env("WEAVIATE_GRPC_HOST")
         self.WEAVIATE_GRPC_PORT = _get_env("WEAVIATE_GRPC_PORT")
-        self.WEAVIATE_API_KEY = _get_env("WEAVIATE_API_KEY")
+        # Local Weaviate runs with anonymous access. Treat an empty value as
+        # no authentication so Flask-Weaviate does not send an OIDC token.
+        self.WEAVIATE_API_KEY = _get_env("WEAVIATE_API_KEY") or None
 
         # Redis配置
         self.REDIS_HOST = _get_env("REDIS_HOST")
@@ -57,6 +59,9 @@ class Config:
             "task_ignore_result": _get_bool_env("CELERY_TASK_IGNORE_RESULT"),
             "result_expires": int(_get_env("CELERY_RESULT_EXPIRES")),
             "broker_connection_retry_on_startup": _get_bool_env("CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP"),
+            # Local workers do not need pidbox remote control. Disabling it
+            # also prevents startup from hanging on stale duplicate node names.
+            "worker_enable_remote_control": False,
         }
 
         # 辅助Agent应用id标识

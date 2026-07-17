@@ -7,6 +7,8 @@
 
 文本嵌入模型服务，负责将文本转换为向量表示
 """
+import os
+
 import tiktoken
 from injector import inject
 from langchain.embeddings import CacheBackedEmbeddings
@@ -49,7 +51,11 @@ class EmbeddingsService:
         # 2.初始化 OpenAI 嵌入模型（1536维）
         #    - model: text-embedding-3-small，输出 1536 维向量
         #    - 需要配置 OPENAI_API_KEY 环境变量
-        self._embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+        self._embeddings = OpenAIEmbeddings(
+            model=os.getenv("EMBEDDINGS_MODEL", "text-embedding-ada-002"),
+            request_timeout=30,
+            max_retries=2,
+        )
 
         # 3.初始化带缓存的嵌入模型
         #    - 将向量结果缓存到 Redis，相同文本直接返回缓存结果

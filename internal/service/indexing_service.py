@@ -361,6 +361,9 @@ class IndexingService(BaseService):
                     "enabled": False,
                     "error": str(e),
                 })
+            # Let build_documents mark the document as ERROR. A document must
+            # never be reported as completed when its vectors were not stored.
+            raise
 
         # 6.更新文档的状态数据
         self.update(

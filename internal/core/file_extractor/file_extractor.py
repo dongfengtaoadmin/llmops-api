@@ -118,7 +118,13 @@ class FileExtractor:
         file_extension = Path(file_path).suffix.lower()
 
         # 2.根据不同的文件扩展名去加载不同的加载器
-        if file_extension in [".xlsx", ".xls"]:
+        if file_extension == ".txt":
+            # Plain-text files must be loaded as text even when their contents
+            # happen to look like JSON. UnstructuredFileLoader sniffs the file
+            # contents and routes JSON-looking text to partition_json, which
+            # only accepts Unstructured's own serialized JSON schema.
+            loader = TextLoader(file_path, autodetect_encoding=True)
+        elif file_extension in [".xlsx", ".xls"]:
             loader = UnstructuredExcelLoader(file_path)
         elif file_extension == ".pdf":
             loader = UnstructuredPDFLoader(file_path)
