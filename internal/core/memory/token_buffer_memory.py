@@ -6,6 +6,7 @@
 @File    : token_buffer_memory.py
 """
 from dataclasses import dataclass
+from typing import Any
 
 from langchain_core.messages import AnyMessage, AIMessage, trim_messages, get_buffer_string
 from sqlalchemy import desc
@@ -22,6 +23,24 @@ class TokenBufferMemory:
     db: SQLAlchemy  # 数据库实例
     conversation: Conversation  # 会话模型
     model_instance: BaseLanguageModel  # LLM大语言模型
+
+    @classmethod
+    def _stringify_message_content(cls, content: Any) -> str:
+        """将不同模型消息内容统一转成文本，避免依赖外部tokenizer。"""
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return "".join(
+                cls._stringify_message_content(item.get("text", "") if isinstance(item, dict) else item)
+                for item in content
+            )
+        return "" if content is None else str(content)
+
+    @classmethod
+    def _count_messages_tokens(cls, messages: list[AnyMessage]) -> int:
+        """轻量估算消息token数，避免LangChain默认加载gpt2 tokenizer。"""
+        text = "\n".join(cls._stringify_message_content(message.content) for message in messages)
+        return max(1, len(text) // 4)
 
     def get_history_prompt_messages(
             self,
@@ -67,7 +86,7 @@ class TokenBufferMemory:
         return trim_messages(
             messages=prompt_messages,
             max_tokens=max_token_limit,
-            token_counter=self.model_instance,
+            token_counter=self._count_messages_tokens,
             strategy="last",
             start_on="human",
             end_on="ai",

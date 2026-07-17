@@ -45,6 +45,14 @@ class FunctionCallAgent(BaseAgent):
             )
         return "" if content is None else str(content)
 
+    def _get_num_tokens_from_messages(self, messages: list) -> int:
+        """统计token失败时降级，避免阻断SSE结束事件。"""
+        try:
+            return self.llm.get_num_tokens_from_messages(messages)
+        except Exception:
+            logging.exception("统计消息token数失败")
+            return 0
+
     def _build_agent(self) -> CompiledStateGraph:
         """构建LangGraph图结构编译程序"""
         # 1.创建图
@@ -230,69 +238,80 @@ class FunctionCallAgent(BaseAgent):
             )
             raise e
 
-        # 8.计算LLM的输入+输出token总数
-        input_token_count = self.llm.get_num_tokens_from_messages(state["messages"])
-        output_token_count = self.llm.get_num_tokens_from_messages([gathered])
+        try:
+            # 8.计算LLM的输入+输出token总数
+            input_token_count = self._get_num_tokens_from_messages(state["messages"])
+            output_token_count = self._get_num_tokens_from_messages([gathered])
 
-        # 9.获取输入/输出价格和单位
-        input_price, output_price, unit = self.llm.get_pricing()
+            # 9.获取输入/输出价格和单位
+            input_price, output_price, unit = self.llm.get_pricing()
 
-        # 10.计算总token+总成本
-        total_token_count = input_token_count + output_token_count
-        total_price = (input_token_count * input_price + output_token_count * output_price) * unit
+            # 10.计算总token+总成本
+            total_token_count = input_token_count + output_token_count
+            total_price = (input_token_count * input_price + output_token_count * output_price) * unit
 
-        has_tool_calls = bool(getattr(gathered, "tool_calls", None))
+            has_tool_calls = bool(getattr(gathered, "tool_calls", None))
 
-        # 11.如果模型发起了工具调用，则添加智能体推理事件并继续执行工具节点。
-        # 部分模型会在同一轮响应里先输出文本，再追加 tool_calls，不能仅凭首个文本 chunk 判断为最终答案。
-        if has_tool_calls:
-            self.agent_queue_manager.publish(state["task_id"], AgentThought(
-                id=id,
-                task_id=state["task_id"],
-                event=QueueEvent.AGENT_THOUGHT,
-                thought=json.dumps(gathered.tool_calls),
-                # 消息相关字段
-                message=messages_to_dict(state["messages"]),
-                message_token_count=input_token_count,
-                message_unit_price=input_price,
-                message_price_unit=unit,
-                # 答案相关字段
-                answer="",
-                answer_token_count=output_token_count,
-                answer_unit_price=output_price,
-                answer_price_unit=unit,
-                # Agent推理统计相关
-                total_token_count=total_token_count,
-                total_price=total_price,
-                latency=(time.perf_counter() - start_at),
-            ))
-        elif generation_type == "message":
-            # 7.如果LLM直接生成answer则表示已经拿到了最终答案，推送一条空内容用于计算总token+总成本，并停止监听
-            self.agent_queue_manager.publish(state["task_id"], AgentThought(
-                id=id,
-                task_id=state["task_id"],
-                event=QueueEvent.AGENT_MESSAGE,
-                thought="",
-                # 消息相关字段
-                message=messages_to_dict(state["messages"]),
-                message_token_count=input_token_count,
-                message_unit_price=input_price,
-                message_price_unit=unit,
-                # 答案相关字段
-                answer="",
-                answer_token_count=output_token_count,
-                answer_unit_price=output_price,
-                answer_price_unit=unit,
-                # Agent推理统计相关
-                total_token_count=total_token_count,
-                total_price=total_price,
-                latency=(time.perf_counter() - start_at),
-            ))
-            self.agent_queue_manager.publish(state["task_id"], AgentThought(
-                id=uuid.uuid4(),
-                task_id=state["task_id"],
-                event=QueueEvent.AGENT_END,
-            ))
+            # 11.如果模型发起了工具调用，则添加智能体推理事件并继续执行工具节点。
+            # 部分模型会在同一轮响应里先输出文本，再追加 tool_calls，不能仅凭首个文本 chunk 判断为最终答案。
+            if has_tool_calls:
+                self.agent_queue_manager.publish(state["task_id"], AgentThought(
+                    id=id,
+                    task_id=state["task_id"],
+                    event=QueueEvent.AGENT_THOUGHT,
+                    thought=json.dumps(gathered.tool_calls),
+                    # 消息相关字段
+                    message=messages_to_dict(state["messages"]),
+                    message_token_count=input_token_count,
+                    message_unit_price=input_price,
+                    message_price_unit=unit,
+                    # 答案相关字段
+                    answer="",
+                    answer_token_count=output_token_count,
+                    answer_unit_price=output_price,
+                    answer_price_unit=unit,
+                    # Agent推理统计相关
+                    total_token_count=total_token_count,
+                    total_price=total_price,
+                    latency=(time.perf_counter() - start_at),
+                ))
+            elif generation_type == "message":
+                # 7.如果LLM直接生成answer则表示已经拿到了最终答案，推送一条空内容用于计算总token+总成本，并停止监听
+                self.agent_queue_manager.publish(state["task_id"], AgentThought(
+                    id=id,
+                    task_id=state["task_id"],
+                    event=QueueEvent.AGENT_MESSAGE,
+                    thought="",
+                    # 消息相关字段
+                    message=messages_to_dict(state["messages"]),
+                    message_token_count=input_token_count,
+                    message_unit_price=input_price,
+                    message_price_unit=unit,
+                    # 答案相关字段
+                    answer="",
+                    answer_token_count=output_token_count,
+                    answer_unit_price=output_price,
+                    answer_price_unit=unit,
+                    # Agent推理统计相关
+                    total_token_count=total_token_count,
+                    total_price=total_price,
+                    latency=(time.perf_counter() - start_at),
+                ))
+                self.agent_queue_manager.publish(state["task_id"], AgentThought(
+                    id=uuid.uuid4(),
+                    task_id=state["task_id"],
+                    event=QueueEvent.AGENT_END,
+                ))
+        except Exception as e:
+            logging.exception(
+                "LLM节点收尾发生错误, 错误信息: %(error)s",
+                {"error": str(e) or "LLM收尾出现未知错误"}
+            )
+            self.agent_queue_manager.publish_error(
+                state["task_id"],
+                f"LLM节点收尾发生错误, 错误信息: {str(e) or 'LLM收尾出现未知错误'}",
+            )
+            raise e
 
         return {"messages": [gathered], "iteration_count": state["iteration_count"] + 1}
 

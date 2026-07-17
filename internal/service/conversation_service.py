@@ -21,6 +21,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import joinedload
 
 from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
+from internal.core.language_model.providers.anthropic.chat import Chat as AnthropicChat
 from internal.entity.conversation_entity import (
     SUMMARIZER_TEMPLATE,
     CONVERSATION_NAME_TEMPLATE,
@@ -104,31 +105,31 @@ class ConversationService(BaseService):
     @classmethod
     def generate_suggested_questions(cls, histories: str) -> list[str]:
         """根据传递的历史信息生成最多不超过3个的建议问题"""
-        # 1.创建prompt
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", SUGGESTED_QUESTIONS_TEMPLATE),
-            ("human", "{histories}")
-        ])
-
-        # 2.构建大语言模型实例，并且将大语言模型的温度调低，降低幻觉的概率
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-        structured_llm = llm.with_structured_output(SuggestedQuestions)
-
-        # 3.构建链应用
-        chain = prompt | structured_llm
-
-        # 4.调用链并获取建议问题列表
-        suggested_questions = chain.invoke({"histories": histories})
-
-        # 5.提取建议问题列表
         questions = []
         try:
+            # 1.创建prompt
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", SUGGESTED_QUESTIONS_TEMPLATE),
+                ("human", "{histories}")
+            ])
+
+            # 2.构建大语言模型实例，并且将大语言模型的温度调低，降低幻觉的概率
+            llm = AnthropicChat(model="kimi-k2.5", temperature=0, max_tokens=4096)
+            structured_llm = llm.with_structured_output(SuggestedQuestions)
+
+            # 3.构建链应用
+            chain = prompt | structured_llm
+
+            # 4.调用链并获取建议问题列表
+            suggested_questions = chain.invoke({"histories": histories})
+
+            # 5.提取建议问题列表
             if suggested_questions and hasattr(suggested_questions, "questions"):
                 questions = suggested_questions.questions
         except Exception as e:
             logging.exception(
-                "生成建议问题出错, suggested_questions: %(suggested_questions)s, 错误信息: %(error)s",
-                {"suggested_questions": suggested_questions, "error": e},
+                "生成建议问题出错, histories: %(histories)s, 错误信息: %(error)s",
+                {"histories": histories, "error": e},
             )
         if len(questions) > 3:
             questions = questions[:3]
