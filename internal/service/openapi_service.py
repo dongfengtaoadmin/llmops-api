@@ -8,7 +8,7 @@
 import json
 from dataclasses import dataclass
 from typing import Generator
-
+import logging
 from flask import current_app
 from injector import inject
 
@@ -99,8 +99,9 @@ class OpenAPIService(BaseService):
         })
 
         # 9.从语言模型中根据模型配置获取模型实例
-        llm = self.language_model_service.load_language_model(app_config.get("model_config", {}))
-
+        app_config.get("model_config")
+        model_config = llm = self.language_model_service.load_language_model(app_config.get("model_config", {}))
+        logging.exception(f"修改向量数据库文档启用状态失败，文档id：{model_config}")
         # 10.实例化TokenBufferMemory用于提取短期记忆
         token_buffer_memory = TokenBufferMemory(
             db=self.db,

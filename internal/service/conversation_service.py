@@ -16,7 +16,6 @@ from flask import Flask, current_app
 from injector import inject
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 from sqlalchemy import desc
 from sqlalchemy.orm import joinedload
 
@@ -50,7 +49,7 @@ class ConversationService(BaseService):
         prompt = ChatPromptTemplate.from_template(SUMMARIZER_TEMPLATE)
 
         # 2.构建大语言模型实例，并且将大语言模型的温度调低，降低幻觉的概率
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
+        llm = AnthropicChat(model="kimi-k2.5", temperature=0.5, max_tokens=4096)
 
         # 3.构建链应用
         summary_chain = prompt | llm | StrOutputParser()
@@ -73,7 +72,7 @@ class ConversationService(BaseService):
         ])
 
         # 2.构建大语言模型实例，并且将大语言模型的温度调低，降低幻觉的概率
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        llm = AnthropicChat(model="kimi-k2.5", temperature=0, max_tokens=4096)
         structured_llm = llm.with_structured_output(ConversationInfo)
 
         # 3.构建链应用

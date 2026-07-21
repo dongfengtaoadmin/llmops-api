@@ -22,7 +22,7 @@ from internal.core.agent.agents import AgentQueueManager, FunctionCallAgent
 from internal.core.agent.entities.agent_entity import AgentConfig
 from internal.core.agent.entities.queue_entity import QueueEvent
 from internal.core.language_model.entities.model_entity import ModelFeature
-from internal.core.language_model.providers.openai.chat import Chat
+from internal.core.language_model.providers.anthropic.chat import Chat as AnthropicChat
 from internal.core.memory import TokenBufferMemory
 from internal.entity.conversation_entity import InvokeFrom, MessageStatus
 from internal.model import Account, Message
@@ -63,10 +63,11 @@ class AssistantAgentService(BaseService):
             status=MessageStatus.NORMAL,
         )
 
-        # 4.使用GPT模型作为辅助Agent的LLM大脑
-        llm = Chat(
-            model="gpt-4o-mini",
+        # 4.使用Anthropic协议模型作为辅助Agent的LLM大脑
+        llm = AnthropicChat(
+            model="kimi-k2.5",
             temperature=0.8,
+            max_tokens=4096,
             features=[ModelFeature.TOOL_CALL, ModelFeature.AGENT_THOUGHT, ModelFeature.IMAGE_INPUT],
             metadata={},
         )
