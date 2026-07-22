@@ -38,8 +38,8 @@ class CosService:
             raise FailException(f"该.{extension}扩展的文件不支持上传，请上传正确的图片")
 
         # 2.获取客户端+存储桶名字
-        client = self._get_client()
-        bucket = self._get_bucket()
+        client = self.get_client()
+        bucket = self.get_bucket()
 
         # 3.生成一个随机的名字
         random_filename = str(uuid.uuid4()) + "." + extension
@@ -68,8 +68,8 @@ class CosService:
 
     def download_file(self, key: str, target_file_path: str):
         """下载cos云端的文件到本地的指定路径"""
-        client = self._get_client()
-        bucket = self._get_bucket()
+        client = self.get_client()
+        bucket = self.get_bucket()
 
         client.download_file(bucket, key, target_file_path)
 
@@ -87,7 +87,7 @@ class CosService:
         return f"{cos_domain}/{key}"
 
     @classmethod
-    def _get_client(cls) -> CosS3Client:
+    def get_client(cls) -> CosS3Client:
         """获取腾讯云cos对象存储客户端"""
         conf = CosConfig(
             Region=os.getenv("COS_REGION"),
@@ -99,6 +99,6 @@ class CosService:
         return CosS3Client(conf)
 
     @classmethod
-    def _get_bucket(cls) -> str:
+    def get_bucket(cls) -> str:
         """获取存储桶的名字"""
         return os.getenv("COS_BUCKET")
